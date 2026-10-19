@@ -1,10 +1,12 @@
 Clustering is quite new to the field of quantum computing but it may bring some interesting techniques worth testing out. Quantum clustering does not differ too much from the idea of finding blocks of data close to each other considering the dimensional space composed by the features. Therefore, we would need to find a good grouping strategy or proximity measure to evaluate the closeness between samples.
 
-Quantum clustering relies on the [APQC](https://pypi.org/project/apqc/) package and TensorFlow, which are not installed by default. Install them with:
+Falcondale offers three methods, all of them scikit-learn estimators living in `falcondale.clustering`:
 
-```
-pip install "falcondale[clustering]"
-```
+| Method | Estimator | Idea | Needs |
+|--------|-----------|------|-------|
+| `pqc` | `QuantumClustering` | Probabilistic Quantum Clustering, fuzzy memberships from a quantum potential | `pip install "falcondale[clustering]"` (APQC and TensorFlow) |
+| `qc` | `SchrodingerClustering` | The original Quantum Clustering, samples roll down a quantum potential | Core install |
+| `qkmeans` | `QuantumKMeans` | k-means or k-medians with distances estimated by quantum interference | Core install |
 
 ## Probabilistic Quantum Clustering
 
@@ -74,4 +76,69 @@ label, proba = myproject.cluster(ctype="pqc", random_state=101)
 
 A single bandwidth can still be forced with `sigma`, for example `myproject.cluster(ctype="pqc", sigma=0.4)`.
 
-There is plenty of room for improvement on this particular topic with implementations on purely quantum approaches in the following releases. As a reference take this work from the people at [Multiverse Computing](https://www.nature.com/articles/s41598-023-39771-6).
+## Quantum Clustering by Horn and Gottlieb
+
+Probabilistic Quantum Clustering builds on an older idea by [Horn and Gottlieb](http://horn.cs.tau.ac.il/publications/nipsQC.pdf). Take a wave function made of a Gaussian of width $\sigma$ around every sample,
+
+$$
+\psi(x) = \sum_i e^{-\frac{|x - x_i|^2}{2\sigma^2}}
+$$
+
+and ask it to be the ground state of a Schrödinger equation. The potential that makes it so is
+
+$$
+V(x) = E - \frac{d}{2} + \frac{1}{2\sigma^2 \psi(x)} \sum_i |x - x_i|^2 e^{-\frac{|x - x_i|^2}{2\sigma^2}}
+$$
+
+Where samples are dense the potential has minima, which play the role of cluster centres. Each sample rolls down the potential by gradient descent and samples ending at the same minimum form a cluster, so there is no need to tell how many clusters to find. The width $\sigma$ still decides how fine the partition is.
+
+`SchrodingerClustering` only needs NumPy and SciPy. The widths are given relative to the spread of the data (the root mean square of the feature standard deviations), and, as `QuantumClustering` does with its bandwidths, it tries a grid of them and keeps the admissible partition with the best training silhouette.
+
+```py
+from falcondale.clustering import SchrodingerClustering, make_clustering_pipeline
+
+pipeline = make_clustering_pipeline(components=6, estimator=SchrodingerClustering(sigmas=[0.5, 0.75, 1.0]))
+pipeline.fit(train)
+
+labels = pipeline.predict(test)  # test samples roll down the train potential
+weights = pipeline.predict_proba(test)  # share of the wave function coming from each cluster
+```
+
+`pipeline[-1].candidates_` lists every width tried and `cluster_centers_` holds the minima found.
+
+## Quantum k-means
+
+The best known clustering algorithm can also be brought to quantum computers. In k-means the expensive step is computing the distance between every sample and every center, and a quantum computer can estimate it by interference ([Khan et al.](https://arxiv.org/abs/1909.12183), [Poggiali et al.](https://arxiv.org/abs/2212.06691)).
+
+A sample $u$ and a center $v$ are amplitude encoded together, $|\psi\rangle = \frac{1}{\sqrt{Z}}(|0\rangle|u\rangle + |1\rangle|v\rangle)$ with $Z = |u|^2 + |v|^2$, which only needs $\lceil \log_2 d \rceil + 1$ qubits for $d$ features. A Hadamard gate on the first qubit makes both halves interfere, and the probability of measuring it as a one is
+
+$$
+P(1) = \frac{|u - v|^2}{2Z}
+$$
+
+so the squared distance is $2 Z P(1)$. Measuring a finite number of times (`shots`) gives a noisy estimate, just as a real device would.
+
+```py
+from falcondale.clustering import QuantumKMeans
+
+pipeline = make_clustering_pipeline(components=6, estimator=QuantumKMeans(n_clusters=4, shots=1024, random_state=101))
+pipeline.fit(train)
+
+labels = pipeline.predict(test)
+distances = pipeline.transform(test)  # estimated distance to each center
+```
+
+Centers are updated classically. With `center="median"` the geometric median of each cluster is used instead of the mean, the quantum k-medians [used at CERN to find anomalous collision events](https://arxiv.org/abs/2301.10780), which is less sensitive to outliers. In that kind of problem the distance to the closest center, `transform(X).min(axis=1)`, is a natural anomaly score.
+
+The circuits are simulated, so this is about learning how the algorithm works rather than speed. To run one on real hardware, `falcondale.helpers.interference.interference_circuit(u, v)` returns the Qiskit circuit for a pair of vectors (it needs `falcondale[clustering]`).
+
+## From a project
+
+All methods can be called from a project, which clusters the whole (preprocessed) dataset and returns the label of each sample with its probability or membership weight:
+
+```py
+labels, proba = myproject.cluster(ctype="qc")
+labels, membership = myproject.cluster(ctype="qkmeans", n_clusters=3, center="median")
+```
+
+There is plenty of room for improvement on this particular topic, for example with variational approaches. As a reference take this work from the people at [Multiverse Computing](https://www.nature.com/articles/s41598-023-39771-6).

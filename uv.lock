@@ -747,6 +747,7 @@ all = [
 ]
 clustering = [
     { name = "apqc" },
+    { name = "qiskit" },
 ]
 feature-selection = [
     { name = "dimod" },
@@ -795,6 +796,7 @@ requires-dist = [
     { name = "numpy", specifier = ">=2.0" },
     { name = "pandas", specifier = ">=2.2" },
     { name = "pennylane", marker = "extra == 'qml'", specifier = ">=0.45.1" },
+    { name = "qiskit", marker = "extra == 'clustering'", specifier = ">=2.4,<2.6" },
     { name = "qiskit", marker = "extra == 'feature-selection'", specifier = ">=2.4,<2.6" },
     { name = "qiskit", marker = "extra == 'qml'", specifier = ">=2.4,<2.6" },
     { name = "qiskit-machine-learning", marker = "extra == 'qml'", specifier = ">=0.9.1" },

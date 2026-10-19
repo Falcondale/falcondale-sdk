@@ -5,7 +5,7 @@ from falcondale import Model, Project
 
 def test_list_options(capsys):
     options = Project.list_options()
-    assert options["feature_selection"] == ["qaoa", "sa", "sb"]
+    assert options["feature_selection"] == ["exact", "qaoa", "sa", "sb"]
     assert options["evaluate"] == ["qnn", "qsvc", "svc"]
     assert "Falcondale" in capsys.readouterr().out
 
