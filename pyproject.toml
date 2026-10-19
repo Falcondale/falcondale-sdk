@@ -1,119 +1,122 @@
 [project]
 name = "falcondale"
-description = "Falcondale SDK"
-authors = [
-    {name = "Stafford Computing LLC", email = "info@staffordcomputing.com"},
+version = "0.2.4"
+description = "Quantum machine learning for computer scientists: feature selection, classification and clustering with a scikit-learn feel."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Falcondale", email = "info@falcondale.pro" }]
+requires-python = ">=3.11,<3.14"
+keywords = ["quantum computing", "quantum machine learning", "qiskit", "pennylane", "qubo", "feature selection"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Physics",
 ]
 dependencies = [
-    "pandas>=2.2.1",
-    "ydata-profiling>=4.5.1",
-    "scikit-learn>=1.3.0",
-    "ipywidgets>=8.1.1",
-    "torch>=2.0.1",
-    "pennylane>=0.35.1",
-    "qiskit>=1.0.2",
-    "qiskit-machine-learning>=0.7.2",
-    "qiskit-aer>=0.14.0.1",
-    "dimod>=0.12.12",
-    "dwave-neal>=0.6.0",
-    "dwave-cloud-client>=0.10.6",
-    "requests[socks]>=2.31.0",
-    "qiskit-optimization>=0.6.1",
-    "qiskit-algorithms>=0.3.0",
-    "apqc>=0.1.3",
-    "simulated-bifurcation>=1.2.0",
+    "dimod>=0.12.22",
+    "dwave-samplers>=1.8.0",
+    "numpy>=2.0",
+    "pandas>=2.2",
+    "pennylane>=0.45.1",
+    # qiskit 2.6.0 needs ~1.5KB of static TLS and, together with the libgomp copies shipped by
+    # torch and scikit-learn, fails to import on glibc ("cannot allocate memory in static TLS block")
+    "qiskit>=2.4,<2.6",
+    "qiskit-machine-learning>=0.9.1",
+    "scikit-learn>=1.6",
+    "scipy>=1.13",
+    "simulated-bifurcation>=2.0.0",
+    "torch>=2.6",
 ]
-requires-python = ">=3.10,<3.12"
-readme = "README.md"
-license = {text = "MIT"}
-dynamic = ["version"]
+
+[project.optional-dependencies]
+# APQC relies on TensorFlow, so it is kept out of the default install.
+clustering = ["apqc>=0.2.0"]
 
 [project.urls]
-"Homepage" = "https://github.com/stafford-computing/falcondale-sdk"
-"Documentation" = "https://falcondale.readthedocs.io/"
+Homepage = "https://github.com/Falcondale/falcondale-sdk"
+Documentation = "https://falcondale.readthedocs.io/"
+Issues = "https://github.com/Falcondale/falcondale-sdk/issues"
+Changelog = "https://github.com/Falcondale/falcondale-sdk/blob/main/CHANGELOG.md"
+
+[dependency-groups]
+dev = [
+    "commitizen>=4.19.2",
+    "pre-commit>=4.7.0",
+    "pytest>=9.1.1",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.17.1",
+    "ty>=0.0.89",
+]
+docs = [
+    "mkdocs>=1.6.1,<2",
+    "mkdocs-jupyter>=0.26.3",
+    "mkdocs-material>=9.7.7",
+    "mkdocstrings-python>=2.0.9",
+]
+notebook = ["ipykernel>=6.29", "matplotlib>=3.9", "seaborn>=0.13"]
+
+[tool.uv]
+default-groups = ["dev"]
+
+# CPU wheels keep the development environment light. This only applies to uv
+# installs from this repository, published metadata keeps the plain `torch` requirement.
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu" }]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
 
 [build-system]
-requires = ["pdm-backend"]
-build-backend = "pdm.backend"
-
-[tool.pdm.version]
-source = "file"
-path = "falcondale/__init__.py"
-
-[tool.pdm.dev-dependencies]
-notebook = [
-    "ipykernel>=6.23.3",
-]
-documentation = [
-    "mkdocs>=1.5.2",
-    "mkdocs-material>=9.3.1",
-    "mkdocs-badges>=0.4.1",
-    "mkdocstrings[crystal,python]>=0.23.0",
-    "mkdocs-jupyter>=0.24.2",
-]
-dev = [
-    "pre-commit>=3.6.0",
-    "ruff>=0.3.5",
-    "tox-pdm>=0.7.0",
-    "coverage>=7.4.0",
-    "nose2>=0.14.0",
-]
+requires = ["uv_build>=0.13.1,<0.14"]
+build-backend = "uv_build"
 
 [tool.ruff]
-include = ["pyproject.toml", "falcondale/**/*.py", "scripts/**/*.py"]
-exclude = [
-    ".bzr",
-    ".direnv",
-    ".eggs",
-    ".git",
-    ".git-rewrite",
-    ".hg",
-    ".mypy_cache",
-    ".nox",
-    ".pants.d",
-    ".pytype",
-    ".ruff_cache",
-    ".svn",
-    ".tox",
-    ".venv",
-    "__pypackages__",
-    "_build",
-    "assets",
-    "build",
-    "dist",
-    "docs",
-]
-
-# Same as Black.
 line-length = 120
-indent-width = 4
-
-# Assume Python 3.10
-target-version = "py310"
+target-version = "py311"
+extend-include = ["*.ipynb"]
 
 [tool.ruff.lint]
-# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
-# Unlike Flake8, Ruff doesn't enable pycodestyle warnings (`W`) or
-# McCabe complexity (`C901`) by default.
-select = ["E4", "E7", "E9", "F"]
-ignore = []
+select = ["E", "W", "F", "I", "UP", "B", "SIM", "NPY", "RUF"]
 
-# Allow fix for all enabled rules (when `--fix`) is provided.
-fixable = ["ALL"]
-unfixable = []
+[tool.ruff.lint.per-file-ignores]
+"docs/**/*.ipynb" = ["E501", "B018"]
 
-# Allow unused variables when underscore-prefixed.
-dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+[tool.ty.src]
+include = ["src", "tests"]
 
-[tool.ruff.format]
-# Like Black, use double quotes for strings.
-quote-style = "double"
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+markers = ["slow: quantum simulations that take more than a few seconds"]
+filterwarnings = [
+    "ignore::DeprecationWarning:pennylane.*",
+    "ignore::DeprecationWarning:tensorflow.*",
+    "ignore::DeprecationWarning:gast.*",  # TensorFlow autograph on Python 3.13
+]
 
-# Like Black, indent with spaces, rather than tabs.
-indent-style = "space"
+[tool.coverage.run]
+source = ["falcondale"]
+branch = true
 
-# Like Black, respect magic trailing commas.
-skip-magic-trailing-comma = false
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
 
-# Like Black, automatically detect the appropriate line ending.
-line-ending = "auto"
+[tool.commitizen]
+name = "cz_conventional_commits"
+version_provider = "uv"
+tag_format = "v$version"
+annotated_tag = true
+update_changelog_on_bump = true
+major_version_zero = true
