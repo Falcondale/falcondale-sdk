@@ -25,6 +25,10 @@ from .model import Model
 EXTRA_PROBES = {"feature-selection": "dimod", "qml": "qiskit_machine_learning", "clustering": "apqc"}
 
 
+# Methods needing an extra, when only some of a task do (the rest run on the core dependencies)
+NEEDS_EXTRA = {"clustering": ["pqc"]}
+
+
 def _installed(extra: str) -> bool:
     return importlib.util.find_spec(EXTRA_PROBES[extra]) is not None
 
@@ -167,7 +171,8 @@ class Project:
         ]
         print("Welcome to Falcondale SDK! you will be able to:")
         for extra, text, methods in tasks:
-            hint = "" if _installed(extra) else f' (install with: pip install "falcondale[{extra}]")'
+            needed = [m for m in methods if m in NEEDS_EXTRA.get(extra, methods)]
+            hint = "" if _installed(extra) else f' ({", ".join(needed)} need: pip install "falcondale[{extra}]")'
             print(f" - {text}: {', '.join(methods)}{hint}")
         return options
 
@@ -212,21 +217,26 @@ class Project:
         Currently supports:
 
         * **pqc**: For Probabilistic Quantum Clustering (needs `falcondale[clustering]`)
+        * **qc**: For Horn and Gottlieb Quantum Clustering
+        * **qkmeans**: For quantum k-means, distances estimated by interference (`n_clusters`,
+          `center="median"` for k-medians, `shots`)
 
         The whole dataset is clustered. To fit on a train split and assign unseen samples,
-        use `falcondale.clustering.QuantumClustering` or `make_clustering_pipeline` directly.
+        use the estimators in `falcondale.clustering` (`QuantumClustering`, `SchrodingerClustering`,
+        `QuantumKMeans`) or `make_clustering_pipeline` directly.
 
         Examples:
             Can be called from Project instance:
 
             ```py
             label, label_prob = myproject.cluster(ctype="pqc", random_state=42)
+            label, membership = myproject.cluster(ctype="qkmeans", n_clusters=3, random_state=42)
             ```
 
         Args:
             ctype (str): Type of clustering to be performed
             **kwargs: Method specific options, such as `sigma`, `bandwidths` or `random_state`
-                (see `QuantumClustering`)
+                (see `QuantumClustering`, `SchrodingerClustering` and `QuantumKMeans`)
 
         Returns:
             (np.ndarray, np.ndarray): A tuple containing the assigned cluster label

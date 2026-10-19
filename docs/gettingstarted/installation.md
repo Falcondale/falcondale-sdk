@@ -22,7 +22,7 @@ The core package only depends on numpy, pandas, scikit-learn and scipy. Each fam
 |-------|---------|-----------|
 | `feature-selection` | `feature_selection()` with `sa`, `sb` and `qaoa` | dimod, dwave-samplers, simulated-bifurcation, PyTorch, Qiskit |
 | `qml` | `evaluate()` with `qsvc` and `qnn` | Qiskit, Qiskit Machine Learning, PennyLane, PyTorch |
-| `clustering` | `cluster()` and `QuantumClustering` | APQC, TensorFlow |
+| `clustering` | `cluster("pqc")`, `QuantumClustering` and the circuits of quantum k-means | APQC, TensorFlow, Qiskit |
 | `all` | All of the above | |
 
 ```

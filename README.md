@@ -51,7 +51,7 @@ model.save("qsvc.pkl")
 |------|---------|----------|
 | Feature selection | `sa` simulated annealing, `sb` simulated bifurcation, `qaoa`, `exact` | dimod, dwave-samplers, simulated-bifurcation, Qiskit |
 | Classification | `qsvc` (Qiskit or PennyLane backend), `qnn`, `svc` classical baseline | Qiskit Machine Learning, PennyLane, PyTorch, scikit-learn |
-| Clustering | `pqc` probabilistic quantum clustering, `QuantumClustering` estimator | APQC |
+| Clustering | `pqc` probabilistic quantum clustering, `qc` Horn and Gottlieb quantum clustering, `qkmeans` quantum k-means and k-medians | APQC (`pqc`), NumPy |
 
 Every model follows the scikit-learn estimator API, so you can also use them in your own pipelines. Run `Project.list_options()` to see what is available.
 
