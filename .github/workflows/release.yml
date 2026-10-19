@@ -3,10 +3,17 @@ name: Release
 # Merging a pull request from develop into main releases a new version:
 # commitizen bumps the version from the conventional commits, updates CHANGELOG.md
 # and tags it, then the package is published to PyPI and a GitHub release is created.
+# If a release stops after the tag was pushed, run the workflow manually with that tag
+# to bring it back to develop, publish it and create the GitHub release.
 on:
   pull_request:
     types: [closed]
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing release tag to publish, e.g. v0.4.0"
+        required: true
 
 concurrency:
   group: release
@@ -17,7 +24,9 @@ env:
 
 jobs:
   bump:
-    if: github.event.pull_request.merged == true && github.event.pull_request.head.ref == 'develop'
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.pull_request.merged == true && github.event.pull_request.head.ref == 'develop')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -37,8 +46,16 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
       - name: Bump version and update changelog
         id: bump
+        env:
+          TAG: ${{ inputs.tag }}
         run: |
           cz() { uvx --from "commitizen==${COMMITIZEN_VERSION}" cz "$@"; }
+          if [ -n "$TAG" ]; then
+            git rev-parse --verify --quiet "refs/tags/$TAG" > /dev/null || { echo "::error::Tag $TAG not found"; exit 1; }
+            cz changelog "$TAG" --dry-run > release-notes.md
+            echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           previous=$(git describe --tags --abbrev=0)
           # 3: no commits since the last release, 21: none of them requires a new version
           cz --no-raise 3,21 bump --yes
