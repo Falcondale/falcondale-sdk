@@ -10,7 +10,7 @@ Falcondale (pipelines, cross validation, grid search,...):
 """
 
 from collections.abc import Callable
-from typing import Protocol, Self
+from typing import Any, Protocol, Self
 
 import numpy as np
 from qiskit.circuit.library import zz_feature_map
@@ -42,12 +42,14 @@ def _with_probabilities(svc: SVC) -> CalibratedClassifierCV:
     return CalibratedClassifierCV(svc, ensemble=False)
 
 
-def build_svc(num_features: int, **kwargs) -> CalibratedClassifierCV:
+def build_svc(num_features: int, **kwargs: Any) -> CalibratedClassifierCV:
     """Classical SVC with an RBF kernel."""
     return _with_probabilities(SVC(**kwargs))
 
 
-def build_qsvc(num_features: int, backend: str = "qiskit", verbose: bool = False, **kwargs) -> CalibratedClassifierCV:
+def build_qsvc(
+    num_features: int, backend: str = "qiskit", verbose: bool = False, **kwargs: Any
+) -> CalibratedClassifierCV:
     """
     Quantum Support Vector Classifier, one qubit per feature.
 
@@ -75,7 +77,7 @@ def build_qsvc(num_features: int, backend: str = "qiskit", verbose: bool = False
     raise ValueError(f"Unknown QSVC backend '{backend}'. Available ones: ['pennylane', 'qiskit']")
 
 
-def build_qnn(num_features: int, **kwargs) -> QNNClassifier:
+def build_qnn(num_features: int, **kwargs: Any) -> QNNClassifier:
     """Quantum Neural Network, see `QNNClassifier` for the available arguments."""
     return QNNClassifier(**kwargs)
 
@@ -127,7 +129,9 @@ def compute_metrics(y_true: np.ndarray, y_pred: np.ndarray, y_proba: np.ndarray)
     return {name: float(value) for name, value in metrics.items()}
 
 
-def train_and_evaluate(model: str, dataset: Dataset, test_size: float = 0.3, **kwargs):
+def train_and_evaluate(
+    model: str, dataset: Dataset, test_size: float = 0.3, **kwargs: Any
+) -> tuple[Classifier, str, dict[str, float]]:
     """
     Builds the requested model, trains it on a train split and evaluates it on the test split.
 

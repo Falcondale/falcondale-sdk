@@ -9,6 +9,7 @@ Classes:
 """
 
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -90,7 +91,7 @@ class Project:
         """
         return self._data.get_features()
 
-    def feature_selection(self, max_cols: int, method: str = "sa", **kwargs) -> list[str]:
+    def feature_selection(self, max_cols: int, method: str = "sa", **kwargs: Any) -> list[str]:
         """
         Performs the quantum feature selection to reduce the columns to be used, selecting
         the obtained features as the ones to be used in following steps.
@@ -150,7 +151,7 @@ class Project:
         print(f" - Perform Quantum Clustering using: {', '.join(options['cluster'])}")
         return options
 
-    def evaluate(self, model: str, test_size: float = 0.3, **kwargs) -> Model:
+    def evaluate(self, model: str, test_size: float = 0.3, **kwargs: Any) -> Model:
         """
         Given a model type, trains it and evaluates its performance
         for the initially given dataset.
@@ -181,7 +182,7 @@ class Project:
         estimator, report, metrics = train_and_evaluate(model, self._data, test_size=test_size, **kwargs)
         return Model(self._data, model, estimator, report, metrics)
 
-    def cluster(self, ctype: str = "pqc", **kwargs) -> tuple[np.ndarray, np.ndarray]:
+    def cluster(self, ctype: str = "pqc", **kwargs: Any) -> tuple[np.ndarray, np.ndarray]:
         """
         Given a type of clustering it is implemented using the
         information of the inner Dataset. Essentially takes the features
@@ -229,7 +230,7 @@ class Project:
         Loads a Falcondale type of model from the provided file name. Same as `Model.load(name)`.
 
         Args:
-            name (str | Path) : File name
+            name (str | Path): File name
 
         Returns:
             Model: Falcondale Model type

@@ -193,7 +193,9 @@ class Dataset:
         """
         return self.get_features().to_numpy(), self.get_target().to_numpy()
 
-    def train_test_split(self, test_size: float = 0.3, random_state: int = 12345):
+    def train_test_split(
+        self, test_size: float = 0.3, random_state: int = 12345
+    ) -> tuple[pd.DataFrame, pd.DataFrame, np.ndarray, np.ndarray]:
         """
         Splits the dataset into train and test blocks, stratified by the target.
 
@@ -205,10 +207,11 @@ class Dataset:
             tuple: x_train, x_test, y_train, y_test
         """
         target = self.get_target().to_numpy()
-        return train_test_split(
+        x_train, x_test, y_train, y_test = train_test_split(
             self.get_features(),
             target,
             test_size=test_size,
             random_state=random_state,
             stratify=target,
         )
+        return x_train, x_test, y_train, y_test

@@ -16,6 +16,7 @@ Ref:
 import itertools
 import warnings
 from collections.abc import Callable, Hashable
+from typing import Any
 
 import dimod
 import numpy as np
@@ -78,7 +79,7 @@ def build_qubo(input_ds: Dataset, max_cols: int | None = None) -> dimod.BinaryQu
     return bqm
 
 
-def solve_sa(bqm: dimod.BinaryQuadraticModel, seed: int | None = None, **kwargs) -> Sample:
+def solve_sa(bqm: dimod.BinaryQuadraticModel, seed: int | None = None, **kwargs: Any) -> Sample:
     """
     Solves the QUBO using simulated annealing.
 
@@ -94,7 +95,7 @@ def solve_sa(bqm: dimod.BinaryQuadraticModel, seed: int | None = None, **kwargs)
     return dict(sampleset.first.sample)
 
 
-def solve_sb(bqm: dimod.BinaryQuadraticModel, seed: int | None = None, **kwargs) -> Sample:
+def solve_sb(bqm: dimod.BinaryQuadraticModel, seed: int | None = None, **kwargs: Any) -> Sample:
     """
     Solves the QUBO using the simulated bifurcation algorithm.
 
@@ -207,7 +208,7 @@ SOLVERS: dict[str, Callable[..., Sample]] = {
 }
 
 
-def select_features(input_ds: Dataset, max_cols: int, method: str = "sa", **kwargs) -> list[str]:
+def select_features(input_ds: Dataset, max_cols: int, method: str = "sa", **kwargs: Any) -> list[str]:
     """
     Selects the best `max_cols` features for the target using the requested solver.
 
