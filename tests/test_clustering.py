@@ -87,8 +87,9 @@ def test_fit_predict(fitted, blobs):
     assert adjusted_rand_score(truth[1::2], fitted.predict(x[1::2])) == pytest.approx(1.0)
     assert {"bandwidth", "stage", "k", "silhouette", "admissible", "steps", "capped"} <= set(fitted.candidates_[0])
 
+    # One column per well (or merged well), some of them may not win any sample
     proba = fitted.predict_proba(x[1::2])
-    assert proba.shape == (30, 2)
+    assert proba.shape == (30, len(np.unique(fitted.source_labels_)))
     assert np.allclose(proba.sum(axis=1), 1)
     assert ((proba >= 0) & (proba <= 1)).all()
 
@@ -103,7 +104,8 @@ def test_probabilities_match_apqc(fitted, blobs):
 
     proba = fitted.predict_proba(x)
     np.testing.assert_array_equal(proba.argmax(axis=1), winner)
-    np.testing.assert_allclose(proba.max(axis=1), np.ravel(winner_proba), rtol=1e-6)
+    # APQC computes the wave function in float32
+    np.testing.assert_allclose(proba.max(axis=1), np.ravel(winner_proba), rtol=1e-5)
 
 
 @needs_apqc
