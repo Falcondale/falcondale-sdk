@@ -1,6 +1,6 @@
 [project]
 name = "falcondale"
-version = "0.4.0"
+version = "0.4.1"
 description = "Quantum machine learning for computer scientists: feature selection, classification and clustering with a scikit-learn feel."
 readme = "README.md"
 license = "MIT"
