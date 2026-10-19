@@ -1,29 +1,39 @@
 # Installation
 
-Falcondale is a Python library (3.11 to 3.13) that can be installed with the usual tools.
+Falcondale is a Python library (3.11 to 3.13) that can be installed with the usual tools. To get everything:
 
 ```
-pip install falcondale
+pip install "falcondale[all]"
 ```
 
 We encourage you to use [uv](https://docs.astral.sh/uv/) as it counts with a robust and fast dependency solving mechanism.
 
 ```
-uv add falcondale
+uv add "falcondale[all]"
 ```
 
-Falcondale installation will also install all additional dependencies needed, in particular those related to quantum computing frameworks (Qiskit, PennyLane) and their compatible versions. This can make it a little bit heavy during installation or initial loading of the classes indicated below (depending on your machine mostly), so we ask you for a little bit of patience at this stage.
+Quantum computing frameworks (Qiskit, PennyLane, PyTorch, TensorFlow...) are heavy, so this can take a little while, we ask you for a little bit of patience at this stage.
 
-!!! tip "CPU only machines"
-    PyTorch is installed from PyPI by default, which on Linux brings GPU libraries along. If you do not have a GPU you can save a few gigabytes by installing PyTorch from its CPU index first, check the [PyTorch documentation](https://pytorch.org/get-started/locally/) or the [uv guide](https://docs.astral.sh/uv/guides/integration/pytorch/).
+## Choosing what to install
 
-## Optional dependencies
+The core package only depends on numpy, pandas, scikit-learn and scipy. Each family of quantum techniques comes in its own extra, so you can install just what you need, which is handy when building container images:
 
-Quantum clustering relies on TensorFlow, which is why it is not installed by default.
+| Extra | Enables | Brings in |
+|-------|---------|-----------|
+| `feature-selection` | `feature_selection()` with `sa`, `sb` and `qaoa` | dimod, dwave-samplers, simulated-bifurcation, PyTorch, Qiskit |
+| `qml` | `evaluate()` with `qsvc` and `qnn` | Qiskit, Qiskit Machine Learning, PennyLane, PyTorch |
+| `clustering` | `cluster()` and `QuantumClustering` | APQC, TensorFlow |
+| `all` | All of the above | |
 
 ```
 pip install "falcondale[clustering]"
+pip install "falcondale[feature-selection,qml]"
 ```
+
+Using a technique whose extra is missing raises an error telling you what to install, and `Project.list_options()` shows which ones are available.
+
+!!! tip "CPU only machines"
+    PyTorch is installed from PyPI by default, which on Linux brings GPU libraries along. If you do not have a GPU you can save a few gigabytes by installing PyTorch from its CPU index first, check the [PyTorch documentation](https://pytorch.org/get-started/locally/) or the [uv guide](https://docs.astral.sh/uv/guides/integration/pytorch/).
 
 ## First steps
 

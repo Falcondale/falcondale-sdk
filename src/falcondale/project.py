@@ -8,6 +8,7 @@ Classes:
         $ myproject = Project(dataset, target="target")
 """
 
+import importlib.util
 from pathlib import Path
 from typing import Any
 
@@ -20,6 +21,13 @@ from .data import Dataset
 from .feature_selection import SOLVERS, select_features
 from .model import Model
 
+# A module from each extra, used to tell which ones are installed
+EXTRA_PROBES = {"feature-selection": "dimod", "qml": "qiskit_machine_learning", "clustering": "apqc"}
+
+
+def _installed(extra: str) -> bool:
+    return importlib.util.find_spec(EXTRA_PROBES[extra]) is not None
+
 
 class Project:
     """
@@ -29,20 +37,23 @@ class Project:
     simpler for the user to call specific training or data processing functions.
     """
 
-    def __init__(self, input_data: pd.DataFrame, target: str):
+    def __init__(self, input_data: pd.DataFrame, target: str | None = None):
         """
         Initializes the Project class to perform evaluations on different QML methods.
 
-        Falcondale is currently focused on supervised methods (even though it supports some
-        unsupervised methods for data clustering), that is why a target variable needs to be
-        provided.
+        Feature selection and classification are supervised tasks, so they need a target
+        variable. Clustering does not, so the target can be left out for unsupervised projects.
 
         Args:
             input_data (pd.DataFrame): Pandas DataFrame
-            target (str): Target variable to be selected from the
+            target (str): (Optional) Target variable to be selected from the
                 input_data dataframe
         """
         self._data = Dataset(input_data, target)
+
+    def _require_target(self, task: str):
+        if self._data.target is None:
+            raise ValueError(f"{task} is a supervised task, create the project with Project(data, target=...).")
 
     @property
     def dataset(self) -> Dataset:
@@ -121,6 +132,7 @@ class Project:
             These are also the features that will be included in the project as the current
             selection of features for following steps within the project.
         """
+        self._require_target("Feature selection")
         if max_cols > len(self._data.columns()):
             raise ValueError(
                 f"Cannot select {max_cols} features out of {len(self._data.columns())}. "
@@ -145,10 +157,15 @@ class Project:
             "evaluate": sorted(MODELS),
             "cluster": sorted(CLUSTERING),
         }
+        tasks = [
+            ("feature-selection", "Perform Quantum Feature Selection using", options["feature_selection"]),
+            ("qml", "Train quantum-enhanced models such as", options["evaluate"]),
+            ("clustering", "Perform Quantum Clustering using", options["cluster"]),
+        ]
         print("Welcome to Falcondale SDK! you will be able to:")
-        print(f" - Perform Quantum Feature Selection using: {', '.join(options['feature_selection'])}")
-        print(f" - Train quantum-enhanced models such as: {', '.join(options['evaluate'])}")
-        print(f" - Perform Quantum Clustering using: {', '.join(options['cluster'])}")
+        for extra, text, methods in tasks:
+            hint = "" if _installed(extra) else f' (install with: pip install "falcondale[{extra}]")'
+            print(f" - {text}: {', '.join(methods)}{hint}")
         return options
 
     def evaluate(self, model: str, test_size: float = 0.3, **kwargs: Any) -> Model:
@@ -178,6 +195,7 @@ class Project:
             model = myproject.evaluate("qsvc", backend="pennylane")
             ```
         """
+        self._require_target("Classification")
         model = model.lower()
         estimator, report, metrics = train_and_evaluate(model, self._data, test_size=test_size, **kwargs)
         return Model(self._data, model, estimator, report, metrics)
@@ -192,16 +210,20 @@ class Project:
 
         * **pqc**: For Probabilistic Quantum Clustering (needs `falcondale[clustering]`)
 
+        The whole dataset is clustered. To fit on a train split and assign unseen samples,
+        use `falcondale.clustering.QuantumClustering` or `make_clustering_pipeline` directly.
+
         Examples:
             Can be called from Project instance:
 
             ```py
-            label, label_prob = myproject.cluster(ctype="pqc")
+            label, label_prob = myproject.cluster(ctype="pqc", random_state=42)
             ```
 
         Args:
             ctype (str): Type of clustering to be performed
-            **kwargs: Method specific options, such as `sigma`
+            **kwargs: Method specific options, such as `sigma`, `bandwidths` or `random_state`
+                (see `QuantumClustering`)
 
         Returns:
             (np.ndarray, np.ndarray): A tuple containing the assigned cluster label

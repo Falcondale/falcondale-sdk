@@ -13,12 +13,12 @@ Falcondale SDK is an open source project that lowers the barrier for computer sc
 ## Installation
 
 ```bash
-pip install falcondale
+pip install "falcondale[all]"
 # or
-uv add falcondale
+uv add "falcondale[all]"
 ```
 
-Quantum clustering relies on TensorFlow, so it lives in an optional extra: `pip install "falcondale[clustering]"`.
+The core only depends on numpy, pandas, scikit-learn and scipy. Each family of techniques has its own extra (`feature-selection`, `qml` and `clustering`), so you can install just the one you need, for example `pip install "falcondale[clustering]"`.
 
 ## Quickstart
 
@@ -51,9 +51,19 @@ model.save("qsvc.pkl")
 |------|---------|----------|
 | Feature selection | `sa` simulated annealing, `sb` simulated bifurcation, `qaoa` | dimod, dwave-samplers, simulated-bifurcation, Qiskit |
 | Classification | `qsvc` (Qiskit or PennyLane backend), `qnn`, `svc` classical baseline | Qiskit Machine Learning, PennyLane, PyTorch, scikit-learn |
-| Clustering | `pqc` probabilistic quantum clustering | APQC |
+| Clustering | `pqc` probabilistic quantum clustering, `QuantumClustering` estimator | APQC |
 
-Every classifier follows the scikit-learn estimator API, so you can also use them in your own pipelines. Run `Project.list_options()` to see what is available.
+Every model follows the scikit-learn estimator API, so you can also use them in your own pipelines. Run `Project.list_options()` to see what is available.
+
+Quantum clustering can be fitted on a train split and assign unseen samples with their membership probabilities:
+
+```python
+from falcondale.clustering import make_clustering_pipeline
+
+pipeline = make_clustering_pipeline(components=6, random_state=101)  # imputation, scaling, PCA, APQC
+pipeline.fit(train)
+labels, probabilities = pipeline.predict(test), pipeline.predict_proba(test)
+```
 
 ## Documentation
 

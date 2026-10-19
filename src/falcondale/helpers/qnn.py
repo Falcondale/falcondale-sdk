@@ -5,9 +5,13 @@ Module implementing a generic Quantum Neural Network classifier
 import math
 
 import numpy as np
-import pennylane as qml
-import torch
 from sklearn.base import BaseEstimator, ClassifierMixin
+
+from .._optional import optional_dependencies
+
+with optional_dependencies("qml"):
+    import pennylane as qml
+    import torch
 
 
 class QNNClassifier(ClassifierMixin, BaseEstimator):

@@ -22,6 +22,7 @@ nav:
     - Advanced usage: 'examples/Advanced example.ipynb'
     - Feature selection: 'examples/Feature selection options.ipynb'
     - Clustering: 'examples/Clustering examples.ipynb'
+    - Clustering train and test: 'examples/Clustering train and test.ipynb'
   - Reference:
     - 'reference.md'
 

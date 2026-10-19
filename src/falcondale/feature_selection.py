@@ -8,30 +8,31 @@ different (quantum and quantum-inspired) solvers:
 * **sb**: Simulated Bifurcation, a quantum-inspired algorithm running on PyTorch
 * **qaoa**: Quantum Approximate Optimization Algorithm simulated with Qiskit
 
+Requires the optional `feature-selection` dependencies: `pip install "falcondale[feature-selection]"`.
+
 Ref:
 - https://dl.acm.org/citation.cfm?id=2623611
 - https://arxiv.org/pdf/2203.13261.pdf
 """
 
+from __future__ import annotations
+
 import itertools
 import warnings
 from collections.abc import Callable, Hashable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-import dimod
 import numpy as np
-import simulated_bifurcation as sb
-import torch
-from dimod.generators import combinations
-from dwave.samplers import SimulatedAnnealingSampler
-from qiskit.circuit.library import qaoa_ansatz
-from qiskit.primitives import StatevectorEstimator, StatevectorSampler
-from qiskit.quantum_info import SparsePauliOp
 from scipy.optimize import minimize
 
+from ._optional import optional_dependencies
 from .data import Dataset
 from .exceptions import TooManyQubitsNeeded
 from .helpers.mutual_information import conditional_mutual_information, mutual_information, prob
+
+if TYPE_CHECKING:
+    import dimod
+    from qiskit.quantum_info import SparsePauliOp
 
 Sample = dict[Hashable, int]
 
@@ -55,6 +56,10 @@ def build_qubo(input_ds: Dataset, max_cols: int | None = None) -> dimod.BinaryQu
     Returns:
         BinaryQuadraticModel: Dimod model holding the QUBO information
     """
+    with optional_dependencies("feature-selection"):
+        import dimod
+        from dimod.generators import combinations
+
     features, target = input_ds.as_arrays()
     col_list = input_ds.columns()
 
@@ -91,6 +96,9 @@ def solve_sa(bqm: dimod.BinaryQuadraticModel, seed: int | None = None, **kwargs:
     Returns:
         dict: Lowest energy assignment found
     """
+    with optional_dependencies("feature-selection"):
+        from dwave.samplers import SimulatedAnnealingSampler
+
     sampleset = SimulatedAnnealingSampler().sample(bqm, seed=seed, **kwargs)
     return dict(sampleset.first.sample)
 
@@ -110,6 +118,10 @@ def solve_sb(bqm: dimod.BinaryQuadraticModel, seed: int | None = None, **kwargs:
     Returns:
         dict: Lowest energy assignment found
     """
+    with optional_dependencies("feature-selection"):
+        import simulated_bifurcation as sb
+        import torch
+
     variables = list(bqm.variables)
     index = {var: i for i, var in enumerate(variables)}
 
@@ -147,6 +159,9 @@ def ising_operator(bqm: dimod.BinaryQuadraticModel) -> tuple[SparsePauliOp, list
     Returns:
         tuple: Hamiltonian as a SparsePauliOp and the variable associated to each qubit
     """
+    with optional_dependencies("feature-selection"):
+        from qiskit.quantum_info import SparsePauliOp
+
     variables = list(bqm.variables)
     index = {var: i for i, var in enumerate(variables)}
     h, J, _ = bqm.to_ising()
@@ -177,6 +192,10 @@ def solve_qaoa(
     Returns:
         dict: Lowest energy assignment found
     """
+    with optional_dependencies("feature-selection"):
+        from qiskit.circuit.library import qaoa_ansatz
+        from qiskit.primitives import StatevectorEstimator, StatevectorSampler
+
     operator, variables = ising_operator(bqm)
     if operator.num_qubits > MAX_QAOA_QUBITS:
         raise TooManyQubitsNeeded(operator.num_qubits, MAX_QAOA_QUBITS)

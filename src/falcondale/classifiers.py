@@ -7,15 +7,16 @@ Falcondale (pipelines, cross validation, grid search,...):
 * **svc**: Classical Support Vector Classifier, a useful baseline
 * **qsvc**: Quantum Support Vector Classifier (Qiskit or PennyLane backends)
 * **qnn**: Quantum Neural Network
+
+Quantum models require the optional `qml` dependencies: `pip install "falcondale[qml]"`.
 """
 
+from __future__ import annotations
+
 from collections.abc import Callable
-from typing import Any, Protocol, Self
+from typing import TYPE_CHECKING, Any, Protocol, Self
 
 import numpy as np
-from qiskit.circuit.library import zz_feature_map
-from qiskit_machine_learning.algorithms import QSVC
-from qiskit_machine_learning.kernels import FidelityStatevectorKernel
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.metrics import (
     accuracy_score,
@@ -28,10 +29,12 @@ from sklearn.metrics import (
 )
 from sklearn.svm import SVC
 
+from ._optional import optional_dependencies
 from .data import Dataset
 from .exceptions import TooManyQubitsNeeded
-from .helpers.kernels import AngleKernel
-from .helpers.qnn import QNNClassifier
+
+if TYPE_CHECKING:
+    from .helpers.qnn import QNNClassifier
 
 # Statevector kernels keep 2^n amplitudes per sample in memory
 MAX_QSVC_QUBITS = 16
@@ -67,10 +70,17 @@ def build_qsvc(
 
     backend = backend.lower()
     if backend == "qiskit":
+        with optional_dependencies("qml"):
+            from qiskit.circuit.library import zz_feature_map
+            from qiskit_machine_learning.algorithms import QSVC
+            from qiskit_machine_learning.kernels import FidelityStatevectorKernel
+
         kernel = FidelityStatevectorKernel(feature_map=zz_feature_map(feature_dimension=num_features, reps=2))
         kwargs.setdefault("C", 100)
         return _with_probabilities(QSVC(quantum_kernel=kernel, verbose=verbose, **kwargs))
     if backend == "pennylane":
+        from .helpers.kernels import AngleKernel
+
         kwargs.setdefault("class_weight", "balanced")
         return _with_probabilities(SVC(kernel=AngleKernel(), verbose=verbose, **kwargs))
 
@@ -79,6 +89,8 @@ def build_qsvc(
 
 def build_qnn(num_features: int, **kwargs: Any) -> QNNClassifier:
     """Quantum Neural Network, see `QNNClassifier` for the available arguments."""
+    from .helpers.qnn import QNNClassifier
+
     return QNNClassifier(**kwargs)
 
 

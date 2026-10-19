@@ -21,25 +21,33 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Scientific/Engineering :: Physics",
 ]
+# The core is kept small, each family of quantum techniques lives in its own extra
 dependencies = [
-    "dimod>=0.12.22",
-    "dwave-samplers>=1.8.0",
     "numpy>=2.0",
     "pandas>=2.2",
-    "pennylane>=0.45.1",
-    # qiskit 2.6.0 needs ~1.5KB of static TLS and, together with the libgomp copies shipped by
-    # torch and scikit-learn, fails to import on glibc ("cannot allocate memory in static TLS block")
-    "qiskit>=2.4,<2.6",
-    "qiskit-machine-learning>=0.9.1",
     "scikit-learn>=1.6",
     "scipy>=1.13",
-    "simulated-bifurcation>=2.0.0",
-    "torch>=2.6",
 ]
 
 [project.optional-dependencies]
-# APQC relies on TensorFlow, so it is kept out of the default install.
+feature-selection = [
+    "dimod>=0.12.22",
+    "dwave-samplers>=1.8.0",
+    # qiskit 2.6.0 needs ~1.5KB of static TLS and, together with the libgomp copies shipped by
+    # torch and scikit-learn, fails to import on glibc ("cannot allocate memory in static TLS block")
+    "qiskit>=2.4,<2.6",
+    "simulated-bifurcation>=2.0.0",
+    "torch>=2.6",
+]
+qml = [
+    "pennylane>=0.45.1",
+    "qiskit>=2.4,<2.6",
+    "qiskit-machine-learning>=0.9.1",
+    "torch>=2.6",
+]
+# APQC relies on TensorFlow
 clustering = ["apqc>=0.2.0"]
+all = ["falcondale[feature-selection,qml,clustering]"]
 
 [project.urls]
 Homepage = "https://github.com/Falcondale/falcondale-sdk"
@@ -49,6 +57,8 @@ Changelog = "https://github.com/Falcondale/falcondale-sdk/blob/main/CHANGELOG.md
 
 [dependency-groups]
 dev = [
+    # Development needs every extra (type checking, tests), so `uv sync` installs them all
+    "falcondale[all]",
     "commitizen>=4.19.2",
     "pre-commit>=4.7.0",
     "pytest>=9.1.1",

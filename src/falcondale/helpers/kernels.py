@@ -3,7 +3,11 @@ Quantum kernels implemented with PennyLane
 """
 
 import numpy as np
-import pennylane as qml
+
+from .._optional import optional_dependencies
+
+with optional_dependencies("qml"):
+    import pennylane as qml
 
 
 class AngleKernel:

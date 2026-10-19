@@ -53,6 +53,23 @@ jobs:
       - run: uv sync --locked --all-extras
       - run: uv run pytest --cov --cov-report=term --cov-report=xml
 
+  extras:
+    # Each extra installed on its own: its family must work, the others must hint at their extra
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        extra: ["", feature-selection, qml, clustering]
+    env:
+      TF_CPP_MIN_LOG_LEVEL: "3"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884  # v10.3.0
+        with:
+          enable-cache: true
+      - run: uv sync --locked --no-default-groups ${{ matrix.extra && format('--extra {0}', matrix.extra) }}
+      - run: uv run --no-sync python scripts/check_extras.py ${{ matrix.extra }}
+
   docs:
     runs-on: ubuntu-latest
     steps:

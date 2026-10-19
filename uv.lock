@@ -725,30 +725,49 @@ name = "falcondale"
 version = "0.2.4"
 source = { editable = "." }
 dependencies = [
-    { name = "dimod" },
-    { name = "dwave-samplers" },
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "numpy", version = "2.5.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
     { name = "pandas" },
-    { name = "pennylane" },
-    { name = "qiskit" },
-    { name = "qiskit-machine-learning" },
     { name = "scikit-learn" },
     { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "scipy", version = "1.18.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+]
+
+[package.optional-dependencies]
+all = [
+    { name = "apqc" },
+    { name = "dimod" },
+    { name = "dwave-samplers" },
+    { name = "pennylane" },
+    { name = "qiskit" },
+    { name = "qiskit-machine-learning" },
     { name = "simulated-bifurcation" },
     { name = "torch", version = "2.14.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'darwin'" },
     { name = "torch", version = "2.14.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform != 'darwin'" },
 ]
-
-[package.optional-dependencies]
 clustering = [
     { name = "apqc" },
+]
+feature-selection = [
+    { name = "dimod" },
+    { name = "dwave-samplers" },
+    { name = "qiskit" },
+    { name = "simulated-bifurcation" },
+    { name = "torch", version = "2.14.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'darwin'" },
+    { name = "torch", version = "2.14.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform != 'darwin'" },
+]
+qml = [
+    { name = "pennylane" },
+    { name = "qiskit" },
+    { name = "qiskit-machine-learning" },
+    { name = "torch", version = "2.14.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'darwin'" },
+    { name = "torch", version = "2.14.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform != 'darwin'" },
 ]
 
 [package.dev-dependencies]
 dev = [
     { name = "commitizen" },
+    { name = "falcondale", extra = ["all"] },
     { name = "pre-commit" },
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -770,23 +789,27 @@ notebook = [
 [package.metadata]
 requires-dist = [
     { name = "apqc", marker = "extra == 'clustering'", specifier = ">=0.2.0" },
-    { name = "dimod", specifier = ">=0.12.22" },
-    { name = "dwave-samplers", specifier = ">=1.8.0" },
+    { name = "dimod", marker = "extra == 'feature-selection'", specifier = ">=0.12.22" },
+    { name = "dwave-samplers", marker = "extra == 'feature-selection'", specifier = ">=1.8.0" },
+    { name = "falcondale", extras = ["feature-selection", "qml", "clustering"], marker = "extra == 'all'" },
     { name = "numpy", specifier = ">=2.0" },
     { name = "pandas", specifier = ">=2.2" },
-    { name = "pennylane", specifier = ">=0.45.1" },
-    { name = "qiskit", specifier = ">=2.4,<2.6" },
-    { name = "qiskit-machine-learning", specifier = ">=0.9.1" },
+    { name = "pennylane", marker = "extra == 'qml'", specifier = ">=0.45.1" },
+    { name = "qiskit", marker = "extra == 'feature-selection'", specifier = ">=2.4,<2.6" },
+    { name = "qiskit", marker = "extra == 'qml'", specifier = ">=2.4,<2.6" },
+    { name = "qiskit-machine-learning", marker = "extra == 'qml'", specifier = ">=0.9.1" },
     { name = "scikit-learn", specifier = ">=1.6" },
     { name = "scipy", specifier = ">=1.13" },
-    { name = "simulated-bifurcation", specifier = ">=2.0.0" },
-    { name = "torch", specifier = ">=2.6", index = "https://download.pytorch.org/whl/cpu" },
+    { name = "simulated-bifurcation", marker = "extra == 'feature-selection'", specifier = ">=2.0.0" },
+    { name = "torch", marker = "extra == 'feature-selection'", specifier = ">=2.6", index = "https://download.pytorch.org/whl/cpu" },
+    { name = "torch", marker = "extra == 'qml'", specifier = ">=2.6", index = "https://download.pytorch.org/whl/cpu" },
 ]
-provides-extras = ["clustering"]
+provides-extras = ["feature-selection", "qml", "clustering", "all"]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "commitizen", specifier = ">=4.19.2" },
+    { name = "falcondale", extras = ["all"] },
     { name = "pre-commit", specifier = ">=4.7.0" },
     { name = "pytest", specifier = ">=9.1.1" },
     { name = "pytest-cov", specifier = ">=7.1.0" },

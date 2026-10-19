@@ -7,10 +7,11 @@ Falcondale SDK: quantum machine learning for computer scientists.
 
 from importlib.metadata import version
 
+from falcondale.clustering import QuantumClustering
 from falcondale.data import Dataset
 from falcondale.exceptions import TooManyQubitsNeeded
 from falcondale.model import Model
 from falcondale.project import Project
 
-__all__ = ["Dataset", "Model", "Project", "TooManyQubitsNeeded"]
+__all__ = ["Dataset", "Model", "Project", "QuantumClustering", "TooManyQubitsNeeded"]
 __version__ = version("falcondale")
