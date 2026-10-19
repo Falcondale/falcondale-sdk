@@ -1,0 +1,36 @@
+name: Bug report
+description: Something is not working as expected
+labels: [bug]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: A clear description of the bug and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Minimal example
+      description: Code that reproduces the problem, ideally using a scikit-learn toy dataset.
+      render: python
+    validations:
+      required: true
+  - type: textarea
+    id: traceback
+    attributes:
+      label: Error message or traceback
+      render: shell
+  - type: input
+    id: version
+    attributes:
+      label: Falcondale version
+      placeholder: python -c "import falcondale; print(falcondale.__version__)"
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Operating system and Python version
+      placeholder: Ubuntu 24.04, Python 3.12

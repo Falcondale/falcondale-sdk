@@ -1,0 +1,118 @@
+name: Release
+
+# Merging a pull request from develop into main releases a new version:
+# commitizen bumps the version from the conventional commits, updates CHANGELOG.md
+# and tags it, then the package is published to PyPI and a GitHub release is created.
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+env:
+  COMMITIZEN_VERSION: "4.19.2"
+
+jobs:
+  bump:
+    if: github.event.pull_request.merged == true && github.event.pull_request.head.ref == 'develop'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      tag: ${{ steps.bump.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+          # A token allowed to push to protected branches, falls back to the workflow token
+          token: ${{ secrets.RELEASE_TOKEN || github.token }}
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884  # v10.3.0
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Bump version and update changelog
+        id: bump
+        run: |
+          cz() { uvx --from "commitizen==${COMMITIZEN_VERSION}" cz "$@"; }
+          previous=$(git describe --tags --abbrev=0)
+          # 3: no commits since the last release, 21: none of them requires a new version
+          cz --no-raise 3,21 bump --yes
+          current=$(git describe --tags --abbrev=0)
+          if [ "$previous" = "$current" ]; then
+            echo "::notice::No releasable changes since $previous"
+            exit 0
+          fi
+          cz changelog "$current" --dry-run > release-notes.md
+          git push origin main "$current"
+          echo "tag=$current" >> "$GITHUB_OUTPUT"
+      - name: Bring the release commit back to develop
+        if: steps.bump.outputs.tag
+        run: |
+          git fetch origin develop
+          git switch develop
+          git merge --no-edit origin/main
+          git push origin develop
+      - uses: actions/upload-artifact@v7
+        if: steps.bump.outputs.tag
+        with:
+          name: release-notes
+          path: release-notes.md
+
+  build:
+    needs: bump
+    if: needs.bump.outputs.tag
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.bump.outputs.tag }}
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884  # v10.3.0
+      - run: uv build
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    needs: [bump, build]
+    runs-on: ubuntu-latest
+    # Trusted publishing, configure it at https://pypi.org/manage/project/falcondale/settings/publishing/
+    environment:
+      name: pypi
+      url: https://pypi.org/project/falcondale/
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884  # v10.3.0
+      - run: uv publish --trusted-publishing always
+
+  github-release:
+    needs: [bump, publish]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: artifacts/
+      - name: Create GitHub release
+        run: |
+          gh release create "$TAG" artifacts/dist/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "$TAG" \
+            --notes-file artifacts/release-notes/release-notes.md \
+            --verify-tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.bump.outputs.tag }}
