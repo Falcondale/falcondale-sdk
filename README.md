@@ -49,7 +49,7 @@ model.save("qsvc.pkl")
 
 | Task | Methods | Built on |
 |------|---------|----------|
-| Feature selection | `sa` simulated annealing, `sb` simulated bifurcation, `qaoa` | dimod, dwave-samplers, simulated-bifurcation, Qiskit |
+| Feature selection | `sa` simulated annealing, `sb` simulated bifurcation, `qaoa`, `exact` | dimod, dwave-samplers, simulated-bifurcation, Qiskit |
 | Classification | `qsvc` (Qiskit or PennyLane backend), `qnn`, `svc` classical baseline | Qiskit Machine Learning, PennyLane, PyTorch, scikit-learn |
 | Clustering | `pqc` probabilistic quantum clustering, `QuantumClustering` estimator | APQC |
 

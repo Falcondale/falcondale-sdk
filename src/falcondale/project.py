@@ -112,19 +112,22 @@ class Project:
         * **sa**: For Simulated Annealing
         * **sb**: For Simulated Bifurcation
         * **qaoa**: For Quantum Approximate Optimization Algorithm (simulated)
+        * **exact**: For the exact solution, enumerating every selection (small problems)
 
         Examples:
             Can be called from Project instance:
 
             ```py
             features = myproject.feature_selection(max_cols=5, method="sb")
+            features = myproject.feature_selection(max_cols=3, method="qaoa", pool=12)
             ```
 
         Args:
             max_cols (int): Maximum number of features to be selected
             method (str): (default sa) Method to be used when trying to find the
                 optimal set of features
-            **kwargs: Solver specific options such as `seed`
+            **kwargs: QUBO options (`formulation`, `bins`, `strategy`, `pool`, see
+                `falcondale.feature_selection.select_features`) and solver specific ones such as `seed`
 
         Returns:
             list[str]: The list of selected features.
