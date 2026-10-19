@@ -37,8 +37,9 @@ jobs:
         with:
           ref: main
           fetch-depth: 0
-          # A token allowed to push to protected branches, falls back to the workflow token
-          token: ${{ secrets.RELEASE_TOKEN || github.token }}
+          # The workflow token cannot bypass the required checks of develop, so the release
+          # commit is pushed with a deploy key with write access, a bypass actor of the rulesets
+          ssh-key: ${{ secrets.RELEASE_DEPLOY_KEY }}
       - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884  # v10.3.0
       - name: Configure git
         run: |
