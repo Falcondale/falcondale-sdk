@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Documentation
+    url: https://falcondale.readthedocs.io/
+    about: Check the guides and examples first
+  - name: Security vulnerability
+    url: https://github.com/Falcondale/falcondale-sdk/security/advisories/new
+    about: Report security issues privately

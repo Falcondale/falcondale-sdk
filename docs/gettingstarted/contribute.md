@@ -1,18 +1,34 @@
 # Contribute
 
-As you probably know, there are many ways in which you could contribute to Falcondale SDK. Feel free to reach out and
-learn about the product roadmap and share your experience using the platform with us.
+As you probably know, there are many ways in which you could contribute to Falcondale SDK: reporting bugs, improving the documentation, adding examples or new quantum techniques. Feel free to reach out and share your experience using the SDK with us.
 
-## Roadmap
+## Development setup
 
-A [roadmap exists](https://github.com/orgs/stafford-computing/projects/2) so that everyone can participate on the new features to be added and see when to expect them.
+Falcondale uses [uv](https://docs.astral.sh/uv/) to manage its environment. Once you clone the repository:
+
+```
+uv sync --all-extras
+uv run pre-commit install --install-hooks
+```
+
+That installs the package in editable mode together with the development tools: [ruff](https://docs.astral.sh/ruff/) for linting and formatting, [ty](https://docs.astral.sh/ty/) for type checking, [pytest](https://docs.pytest.org/) for testing and [commitizen](https://commitizen-tools.github.io/commitizen/) for commit messages and releases.
+
+```
+uv run pytest -m "not slow"   # quick feedback
+uv run pytest --cov           # everything, quantum simulations included
+uv run pre-commit run --all-files
+```
+
+Commits follow the [Conventional Commits](https://www.conventionalcommits.org/) convention (`feat: ...`, `fix: ...`, `docs: ...`). You can use `uv run cz commit` if you do not want to remember the format. They matter: when `develop` is merged into `main`, the version number, the changelog and the PyPI release are generated from them.
+
+The documentation is built with MkDocs:
+
+```
+uv run --group docs mkdocs serve
+```
+
+Check the [contributing guide](https://github.com/Falcondale/falcondale-sdk/blob/main/CONTRIBUTING.md) for the full details.
 
 ## Community
 
-We think that by sharing is key for open source projects and that is why we created the Falcondale community where everyone can join, ask for support from colleagues already familiar with specific topics, request improvements, chat and discuss in general.
-
-Find out more at our Discord server: [join the server](https://discord.gg/JvYtK2RJg4)
-
-## Contact
-
-Contact us: [info@staffordcomputing.com](mailto:info@staffordcomputing.com)
+We think that sharing is key for open source projects. Use [GitHub issues](https://github.com/Falcondale/falcondale-sdk/issues) to ask for support, request improvements or discuss in general.

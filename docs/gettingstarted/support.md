@@ -1,15 +1,5 @@
 # Support
 
-Falcondale SDK is an Open Source project that counts with the collaboration of individuals under the umbrella of [Stafford Computing LLC](http://www.staffordcomputing.com).
+Falcondale SDK is an Open Source project developed by Falcondale and released under the MIT license.
 
-<figure markdown>
-  ![stafford.png](../assets/stafford-logo.png)
-</figure>
-
-A special mention should be made though to some of the individuals behind all the work to bring this into a reality:
-
-* Javier Mancilla
-* Tomas Tagliani
-* Niwred Ramirez
-* Carolina Allende
-* Iraitz Montalbán
+If you find a bug or want to propose an improvement, open an [issue on GitHub](https://github.com/Falcondale/falcondale-sdk/issues). For any other matter, get in touch at [info@falcondale.pro](mailto:info@falcondale.pro).

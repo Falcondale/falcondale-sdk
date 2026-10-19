@@ -15,4 +15,10 @@ On key parameter we will find when using this technique is the $\sigma$ variable
 label, proba = myproject.cluster(ctype="pqc")
 ```
 
+This method relies on the [APQC](https://pypi.org/project/apqc/) package and TensorFlow, which are not installed by default. Install them with:
+
+```
+pip install "falcondale[clustering]"
+```
+
 There is plenty of room for improvement on this particular topic with implementations on purely quantum approaches in the following releases. As a reference take this work from the people at [Multiverse Computing](https://www.nature.com/articles/s41598-023-39771-6)

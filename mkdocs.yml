@@ -1,6 +1,8 @@
-site_name: SDK
-repo_url: https://github.com/stafford-computing/falcondale-sdk
-repo_name: stafford-computing/falcondale-sdk
+site_name: Falcondale SDK
+site_url: https://falcondale.readthedocs.io/
+repo_url: https://github.com/Falcondale/falcondale-sdk
+repo_name: Falcondale/falcondale-sdk
+copyright: Copyright &copy; 2023 - 2026 Falcondale
 site_dir: site
 nav:
   - Welcome:
@@ -64,19 +66,20 @@ markdown_extensions:
   - pymdownx.inlinehilite
   - pymdownx.snippets
   - pymdownx.superfences
-  - md_in_html
   - pymdownx.arithmatex:
       generic: true
   - attr_list
   - md_in_html
+  - admonition
+  - pymdownx.details
+  - tables
 
 extra_javascript:
   - javascripts/mathjax.js
-  - https://polyfill.io/v3/polyfill.min.js?features=es6
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
 
 watch:
-  - falcondale
+  - src/falcondale
 plugins:
   - mkdocs-jupyter:
       execute: False
@@ -85,5 +88,6 @@ plugins:
   - mkdocstrings:
       handlers:
         python:
+          paths: [src]
           options:
             docstring_style: google

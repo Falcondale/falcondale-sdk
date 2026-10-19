@@ -1,0 +1,16 @@
+name: Feature request
+description: Propose a new technique, integration or improvement
+labels: [enhancement]
+body:
+  - type: textarea
+    id: motivation
+    attributes:
+      label: What would you like to do?
+      description: Describe the use case and why it would be useful.
+    validations:
+      required: true
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: Papers, implementations or documentation related to the proposal.

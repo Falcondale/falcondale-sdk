@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v10
+        with:
+          enable-cache: true
+      - name: Check commit messages
+        if: github.event_name == 'pull_request'
+        run: uvx --from commitizen==4.19.2 cz check --rev-range "origin/${{ github.base_ref }}..HEAD"
+      - run: uv sync --locked --all-extras
+      - uses: actions/cache@v6
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
+      - run: uv run pre-commit run --all-files --show-diff-on-failure
+
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        python-version: ["3.11", "3.12", "3.13"]
+        include:
+          - os: macos-latest
+            python-version: "3.12"
+    env:
+      TF_CPP_MIN_LOG_LEVEL: "3"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10
+        with:
+          enable-cache: true
+          python-version: ${{ matrix.python-version }}
+      - run: uv sync --locked --all-extras
+      - run: uv run pytest --cov --cov-report=term --cov-report=xml
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10
+        with:
+          enable-cache: true
+      - run: uv sync --locked --no-default-groups --group docs
+      - run: uv run --no-sync mkdocs build --strict

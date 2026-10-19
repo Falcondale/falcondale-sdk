@@ -42,6 +42,23 @@ We can change the ratio to be used for validation of the model training by selec
 model = myproject.evaluate("qsvc", test_size=0.3)
 ```
 
+Two implementations are available. By default the [Qiskit](https://qiskit.org/) one uses a ZZ feature map, while the [PennyLane](https://pennylane.ai/) one uses angle embedding.
+
+```py
+model = myproject.evaluate("qsvc", backend="pennylane")
+```
+
+Both of them need one qubit per feature and compute the kernel from simulated statevectors, so up to 16 features are allowed. Use feature selection or dimensionality reduction to get there.
+
+### A classical baseline
+
+It is always a good idea to compare against a classical model trained on the same data. The `svc` option trains a classical Support Vector Classifier, so you can check whether the quantum model brings anything to the table.
+
+```py
+baseline = myproject.evaluate("svc")
+baseline.metric("auc")
+```
+
 ### Quantum Neural Networks (QNN)
 
 Quantum Neural Networks is basically the idea of merging the ability to use layered parameterized structures coming from classical Neural Networks with the concept of Parameterized Quantum Circuits (PQC). This way, we can set up a PQC or ansatz that can be tuned towards a classification purpose.
@@ -55,10 +72,23 @@ model = myproject.evaluate("qnn", test_size=0.3)
 A layered parameterized quantum circuit will be suited for the particular characteristics of the provided dataset. This is a non trivial task as pointed out by [Larocca et al.](https://arxiv.org/abs/2109.11676) but there is room to experiment in the current setup, by selecting a number of layers that will affect the final architecture of the ansatz.
 
 ```python
-model = myproject.evaluate("qnn", test_size=0.3, layers=4)
+model = myproject.evaluate("qnn", test_size=0.3, layers=4, epochs=30, learning_rate=0.05)
 ```
 
-By default current implementation performs [Amplitude Embedding](https://pennylane.ai/qml/glossary/quantum_embedding/) but we would like to extend this so that advanced users can try out different setups for both data embedding as well as layer structures.
+The training progress can be printed by passing `verbose=True`.
+
+Current implementation performs [Amplitude Embedding](https://pennylane.ai/qml/glossary/quantum_embedding/), so $n$ features only need $\lceil \log_2 n \rceil$ qubits, followed by strongly entangling layers. We would like to extend this so that advanced users can try out different setups for both data embedding as well as layer structures.
+
+### Using the models outside Falcondale
+
+Every model follows the [scikit-learn](https://scikit-learn.org/) estimator API. The trained estimator is available as `model.estimator`, and the classes can be used directly in your own pipelines.
+
+```python
+from falcondale.helpers.qnn import QNNClassifier
+from sklearn.model_selection import cross_val_score
+
+cross_val_score(QNNClassifier(layers=2), X, y, cv=3)
+```
 
 ### Report and metrics
 
@@ -78,7 +108,7 @@ In order to provide as much information as possible for the outcome of the proje
 
 - **Additional metrics**
 
-    Taken from the confusion matrix generated after model being trained and tested against the test dataset, precision, recall, balanced accuracy, accuracy and f1 score among other metrics can be directly consulted by requesting the available metrics to the model (using the ```list_metrics()``` function).
+    Taken from the confusion matrix generated after model being trained and tested against the test dataset, precision, recall, specificity, balanced accuracy, accuracy and f1 score among other metrics can be directly consulted by requesting the available metrics to the model (using the ```list_metrics()``` function).
 
 ```python
 # List available metrics
@@ -100,4 +130,14 @@ y_pred = model.predict(X)
 
 The model will return the target class so that users can evaluate or use its response for potentially longer or more complex jobs where Falcondale is introduced as an intermediary step.
 
-This is often recommended following the philosophy of Stafford Computing, making Quantum Machine Learning not a substitution but and addition to the current model toolbox a company may have.
+This is often recommended following Falcondale's philosophy, making Quantum Machine Learning not a substitution but an addition to the current model toolbox a company may have.
+
+Models can be stored and loaded back. As with any pickle file, only load models you trust.
+
+```py
+model.save("my_model.pkl")
+
+from falcondale import Model
+
+model = Model.load("my_model.pkl")
+```
