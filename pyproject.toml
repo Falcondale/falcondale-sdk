@@ -45,8 +45,8 @@ qml = [
     "qiskit-machine-learning>=0.9.1",
     "torch>=2.6",
 ]
-# APQC relies on TensorFlow
-clustering = ["apqc>=0.2.0"]
+# APQC relies on TensorFlow, Qiskit builds the interference circuits of quantum k-means
+clustering = ["apqc>=0.2.0", "qiskit>=2.4,<2.6"]
 all = ["falcondale[feature-selection,qml,clustering]"]
 
 [project.urls]
