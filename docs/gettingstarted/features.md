@@ -3,6 +3,7 @@
 Falcondale aims to make Quantum Machine Learning easy to use but also highly adaptable to those with specific needs or willing to test different options. At current version it provides:
 
 * Simple and easy **data preprocessing** for the purpose. You can bring your own data engineering practices but we also want to make it easy for those new to the field
+* **QML assessment** telling how well suited a dataset is for quantum models, why, and which of Falcondale's models to try first
 * **Quantum Feature Selection** using _state-of-the-art_ techniques: simulated annealing, simulated bifurcation and QAOA
 * **Quantum Classification** models with a diverse set of options: Quantum Support Vector Machines and Quantum Neural Networks, together with a classical baseline to compare against
 * **Quantum Clustering** by means of quantum inspired approaches like Probabilistic Quantum Clustering and Horn and Gottlieb Quantum Clustering, or quantum k-means with distances estimated by interference, all with a train/test workflow for unseen samples

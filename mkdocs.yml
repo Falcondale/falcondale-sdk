@@ -15,11 +15,13 @@ nav:
     - Support : 'gettingstarted/support.md'
   - Modules:
     - Data manipulation: 'techniques/datamanipulation.md'
+    - QML assessment: 'techniques/assessment.md'
     - Feature Selection: 'techniques/featureselection.md'
     - Classification: 'techniques/models.md'
     - Clustering: 'techniques/clustering.md'
   - More examples:
     - Advanced usage: 'examples/Advanced example.ipynb'
+    - QML assessment: 'examples/QML assessment.ipynb'
     - Feature selection: 'examples/Feature selection options.ipynb'
     - Clustering: 'examples/Clustering examples.ipynb'
     - Clustering train and test: 'examples/Clustering train and test.ipynb'

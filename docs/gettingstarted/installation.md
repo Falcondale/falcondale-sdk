@@ -16,7 +16,7 @@ Quantum computing frameworks (Qiskit, PennyLane, PyTorch, TensorFlow...) are hea
 
 ## Choosing what to install
 
-The core package only depends on numpy, pandas, scikit-learn and scipy. Each family of quantum techniques comes in its own extra, so you can install just what you need, which is handy when building container images:
+The core package only depends on numpy, pandas, scikit-learn, scipy and rich. Each family of quantum techniques comes in its own extra, so you can install just what you need, which is handy when building container images:
 
 | Extra | Enables | Brings in |
 |-------|---------|-----------|

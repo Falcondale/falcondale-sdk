@@ -15,6 +15,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from .assessment import QMLAssessor
 from .classifiers import MODELS, train_and_evaluate
 from .clustering import CLUSTERING
 from .data import Dataset
@@ -54,6 +55,8 @@ class Project:
                 input_data dataframe
         """
         self._data = Dataset(input_data, target)
+        self._assessment: QMLAssessor | None = None
+        self._assessed_columns: list[str] = []
 
     def _require_target(self, task: str):
         if self._data.target is None:
@@ -151,6 +154,46 @@ class Project:
 
         return feature_cols
 
+    def assess(self, n_qubits: int | None = None, **kwargs: Any) -> QMLAssessor:
+        """
+        Assesses how well suited the current features are for quantum machine learning
+        and ranks the models available in `evaluate` accordingly.
+
+        The assessment looks at how fast the target oscillates along each feature (what angle
+        encoded circuits have to express), how many of those frequencies are trainable, the
+        circuit depth needed, how hard the task is for classical baselines, the class balance
+        and the qubit budget. See `falcondale.assessment.QMLAssessor` for the details.
+
+        The result is kept by the project, so that `evaluate("auto")` trains the most suitable model.
+
+        Examples:
+            Can be called from Project instance:
+
+            ```py
+            assessment = myproject.assess(n_qubits=8)
+            assessment.report()
+            assessment.best_model
+            ```
+
+        Args:
+            n_qubits (int): (Optional) Qubit budget, 16 by default (the statevector limit of QSVC)
+            **kwargs: Additional `QMLAssessor` options, such as `max_samples` for large datasets
+
+        Returns:
+            QMLAssessor: The fitted assessor holding scores, diagnostics and model recommendations
+        """
+        self._require_target("Assessment")
+        if n_qubits is not None:
+            kwargs["n_qubits"] = n_qubits
+        self._assessment = QMLAssessor(**kwargs).fit(self._data.get_features(), self._data.get_target())
+        self._assessed_columns = self._data.columns()
+        return self._assessment
+
+    @property
+    def assessment(self) -> QMLAssessor | None:
+        """Latest assessment of the project, None until `assess` is called."""
+        return self._assessment
+
     @staticmethod
     def list_options() -> dict[str, list[str]]:
         """
@@ -174,6 +217,7 @@ class Project:
             needed = [m for m in methods if m in NEEDS_EXTRA.get(extra, methods)]
             hint = "" if _installed(extra) else f' ({", ".join(needed)} need: pip install "falcondale[{extra}]")'
             print(f" - {text}: {', '.join(methods)}{hint}")
+        print(' - Assess how suited your data is for QML with assess(), then evaluate("auto") picks the best model')
         return options
 
     def evaluate(self, model: str, test_size: float = 0.3, **kwargs: Any) -> Model:
@@ -186,6 +230,8 @@ class Project:
         * **svc**: Classical Support Vector Classifier (baseline)
         * **qsvc**: For Quantum Support Vector Classifier (`backend="qiskit"` or `backend="pennylane"`)
         * **qnn**: For Quantum Neural Network (`layers`, `epochs`, `learning_rate`,...)
+        * **auto**: The most suitable model according to `assess`, which is run first if the
+          project has not been assessed yet or the features changed since
 
         Args:
             model (str): Model name to be trained
@@ -201,10 +247,18 @@ class Project:
 
             ```py
             model = myproject.evaluate("qsvc", backend="pennylane")
+            model = myproject.evaluate("auto")
             ```
         """
         self._require_target("Classification")
         model = model.lower()
+        if model == "auto":
+            if self._assessment is None or self._assessed_columns != self._data.columns():
+                self.assess()
+            assert self._assessment is not None
+            best = self._assessment.best_model
+            print(f"Assessment recommends {best.name}: {best.reasons[0]}")
+            model, kwargs = best.model, {**best.options, **kwargs}
         estimator, report, metrics = train_and_evaluate(model, self._data, test_size=test_size, **kwargs)
         return Model(self._data, model, estimator, report, metrics)
 

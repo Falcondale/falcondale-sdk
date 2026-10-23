@@ -50,6 +50,7 @@ CHECKS: dict[str, Callable[[], None]] = {
 def main(installed: set[str]):
     # The classical baseline and the core clustering methods only need the core dependencies
     assert pd.notna(project().evaluate("svc").metric("auc"))
+    assert 0 <= project().assess().score_ <= 100
     x = np.r_[np.random.default_rng(0).normal(-2, 0.3, (20, 2)), np.random.default_rng(1).normal(2, 0.3, (20, 2))]
     assert SchrodingerClustering().fit(x).n_clusters_ == 2
     assert QuantumKMeans(2, random_state=0).fit(x).n_clusters_ == 2
