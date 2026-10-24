@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import importlib.util
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
@@ -30,6 +31,9 @@ from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline, make_pipeline
 
 from ._optional import optional_dependencies
+
+if TYPE_CHECKING:
+    from skrub import TableReport
 
 # Columns above these thresholds are worth a hint
 MISSING_WARNING = 0.2
@@ -50,7 +54,7 @@ def non_numeric_columns(df: pd.DataFrame) -> list[str]:
     return [str(col) for col in df.columns if not pd.api.types.is_numeric_dtype(df[col])]
 
 
-def make_encoder(cardinality_threshold: int = 10, string_components: int = 4, **kwargs) -> Pipeline:
+def make_encoder(cardinality_threshold: int = 10, string_components: int = 4, **kwargs: Any) -> Pipeline:
     """
     Pipeline turning a heterogeneous dataframe into a fully informed numeric one.
 
@@ -206,7 +210,7 @@ class TableDiagnosis:
         return Group(table)
 
 
-def diagnose(df: pd.DataFrame, target: pd.Series | np.ndarray | None = None, **encoder_options) -> TableDiagnosis:
+def diagnose(df: pd.DataFrame, target: pd.Series | np.ndarray | None = None, **encoder_options: Any) -> TableDiagnosis:
     """
     Looks at a raw table before encoding it.
 
@@ -264,7 +268,7 @@ def diagnose(df: pd.DataFrame, target: pd.Series | np.ndarray | None = None, **e
     return TableDiagnosis(columns=columns, redundant=redundant, samples=len(df))
 
 
-def table_report(df: pd.DataFrame, **kwargs):
+def table_report(df: pd.DataFrame, **kwargs: Any) -> TableReport:
     """
     Interactive skrub report of a dataframe: distributions, missing values and associations.
     Renders in notebooks, `.open()` shows it in the browser.

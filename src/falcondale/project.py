@@ -10,7 +10,7 @@ Classes:
 
 import importlib.util
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
@@ -22,6 +22,9 @@ from .data import Dataset
 from .feature_selection import SOLVERS, select_features
 from .model import Model
 from .tabular import table_report
+
+if TYPE_CHECKING:
+    from skrub import TableReport
 
 # A module from each extra, used to tell which ones are installed
 EXTRA_PROBES = {
@@ -114,7 +117,7 @@ class Project:
         """
         return self._data.profile()
 
-    def table_report(self, **kwargs: Any):
+    def table_report(self, **kwargs: Any) -> "TableReport":
         """
         Interactive report of the raw dataset (distributions, missing values, associations between
         columns) built with skrub, which needs `falcondale[tabular]`. Renders in notebooks, call

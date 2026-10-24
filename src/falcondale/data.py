@@ -3,6 +3,8 @@ This module implements the data structure that will be used
 along any steps of a Falcondale project.
 """
 
+from typing import Any
+
 import numpy as np
 import pandas as pd
 from sklearn.decomposition import PCA
@@ -108,7 +110,7 @@ class Dataset:
         reduced_dimension: int | None = None,
         method: str = "pca",
         encode: bool | str = "auto",
-        **encoder_options,
+        **encoder_options: Any,
     ):
         """
         Preprocessing of the dataset: makes every feature numeric and fully informed, then scales
