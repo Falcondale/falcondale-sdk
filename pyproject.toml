@@ -21,10 +21,11 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Scientific/Engineering :: Physics",
 ]
-# The core is kept small, each family of quantum techniques lives in its own extra
+# The core is kept small (rich renders the reports), each family of quantum techniques lives in its own extra
 dependencies = [
     "numpy>=2.0",
     "pandas>=2.2",
+    "rich>=14",
     "scikit-learn>=1.6",
     "scipy>=1.13",
 ]
@@ -47,7 +48,9 @@ qml = [
 ]
 # APQC relies on TensorFlow, Qiskit builds the interference circuits of quantum k-means
 clustering = ["apqc>=0.2.0", "qiskit>=2.4,<2.6"]
-all = ["falcondale[feature-selection,qml,clustering]"]
+# Encoding of non numeric columns (categories, text, dates) and diagnosis of raw tables
+tabular = ["skrub>=0.11"]
+all = ["falcondale[feature-selection,qml,clustering,tabular]"]
 
 [project.urls]
 Homepage = "https://github.com/Falcondale/falcondale-sdk"
