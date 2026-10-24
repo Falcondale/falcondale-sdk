@@ -32,6 +32,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 import numpy as np
+import pandas as pd
 from rich.console import Console, Group
 from rich.panel import Panel
 from rich.progress_bar import ProgressBar
@@ -44,6 +45,7 @@ from sklearn.model_selection import StratifiedKFold, StratifiedShuffleSplit, cro
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler
 from sklearn.tree import DecisionTreeClassifier
 
+from . import tabular
 from .classifiers import MAX_QSVC_QUBITS, compute_metrics
 
 # Weights of each sub-score in the final score
@@ -321,6 +323,7 @@ class QMLAssessor(BaseEstimator):
         balance_ (tuple[float, str]): Class balance ratio and its label
         baseline_ (dict | None): Out of fold metrics of the classical baselines
         kernel_spectrum_ (dict | None): RBF kernel eigenspectrum diagnostics
+        table_ (TableDiagnosis | None): Diagnosis of the raw table (kinds, missing values, redundancy,...)
         recommendations_ (list[ModelRecommendation]): Falcondale models, most suitable first
     """
 
@@ -336,6 +339,7 @@ class QMLAssessor(BaseEstimator):
         max_samples: int | None = None,
         max_features: int | None = None,
         random_state: int = 42,
+        diagnose: bool | str = "auto",
     ):
         """
         Args:
@@ -349,6 +353,8 @@ class QMLAssessor(BaseEstimator):
             max_samples (int): (Optional) Stratified subsample used for the assessment of large datasets
             max_features (int): (Optional) Only analyse the features with the highest variance
             random_state (int): Seed for subsampling and cross validation
+            diagnose (bool | str): Diagnose the raw table with skrub (`falcondale[tabular]`), "auto" does it
+                when a dataframe is available and skrub is installed
         """
         self.n_qubits = n_qubits
         self.epsilon = epsilon
@@ -360,18 +366,32 @@ class QMLAssessor(BaseEstimator):
         self.max_samples = max_samples
         self.max_features = max_features
         self.random_state = random_state
+        self.diagnose = diagnose
 
-    def fit(self, X, y) -> QMLAssessor:
+    def fit(self, X, y, table: pd.DataFrame | None = None, encoder_options: dict | None = None) -> QMLAssessor:
         """
         Runs the assessment.
 
         Args:
-            X (array-like): Features (samples x features), a dataframe keeps the column names
+            X (array-like): Features (samples x features), a dataframe keeps the column names. Dataframes
+                with non numeric columns are encoded with `falcondale.tabular.make_encoder`
             y (array-like): Class labels
+            table (pd.DataFrame): (Optional) Raw table the features come from, for the diagnosis. By
+                default X itself when it is a dataframe
+            encoder_options (dict): (Optional) `make_encoder` options used to encode the raw table
 
         Returns:
             QMLAssessor: The fitted assessor
         """
+        if isinstance(X, pd.DataFrame):
+            table = X if table is None else table
+            if tabular.non_numeric_columns(X):
+                X = tabular.make_encoder(**(encoder_options or {})).fit_transform(X)
+        run_diagnosis = self.diagnose is True or (self.diagnose == "auto" and tabular.available())
+        self.table_ = (
+            tabular.diagnose(table, y, **(encoder_options or {})) if run_diagnosis and table is not None else None
+        )
+
         names = [str(c) for c in X.columns] if hasattr(X, "columns") else [f"x{i}" for i in range(np.shape(X)[1])]
         X = np.asarray(X, dtype=float)
         y = LabelEncoder().fit_transform(np.asarray(y))
@@ -555,7 +575,7 @@ class QMLAssessor(BaseEstimator):
         """
         self._check_fitted()
         subs, d = self.sub_scores_, self.details_
-        hints = []
+        hints = self.table_.hints() if self.table_ is not None else []
         if subs["trainability"] < 50:
             hints.append("Many frequencies are out of reach, initialise encoding angles on a {-1, 0, 1} grid.")
         if subs["depth"] < 60:
@@ -573,7 +593,8 @@ class QMLAssessor(BaseEstimator):
             )
         silent = self.features_used_ - d["informative_features"]
         if silent:
-            hints.append(f"{silent} features show no signal along their axis, feature_selection() could drop them.")
+            shows = "feature shows" if silent == 1 else "features show"
+            hints.append(f"{silent} {shows} no signal along their axis, feature_selection() could drop them.")
         if self.n_features_in_ > min(self.n_qubits, MAX_QSVC_QUBITS):
             hints.append("Too many features for one qubit per feature, select features to try QSVC.")
         return hints
@@ -596,6 +617,7 @@ class QMLAssessor(BaseEstimator):
             "kernel_spectrum": self.kernel_spectrum_,
             "feature_spectra": [vars(s) for s in self.feature_spectra_],
             "recommendations": [vars(r) for r in self.recommendations_],
+            "table": self.table_.to_dict() if self.table_ is not None else None,
             "advice": self.advice(),
         }
 
@@ -643,6 +665,8 @@ class QMLAssessor(BaseEstimator):
             Panel(header, title="[bold]QML suitability", title_align="left", border_style=colour),
             Panel(scores, title="Sub-scores", title_align="left", border_style="dim"),
         ]
+        if self.table_ is not None:
+            parts.append(self.table_)
 
         if self.baseline_:
             baseline = Table(title="Classical baseline (3 fold, out of fold)", title_justify="left", expand=True)

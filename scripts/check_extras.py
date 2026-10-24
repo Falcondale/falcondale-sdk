@@ -34,6 +34,13 @@ def qml():
     p.evaluate("qnn", epochs=1)
 
 
+def tabular():
+    data = pd.DataFrame({"plan": ["basic", "plus", None, "plus"] * 10, "fee": [20.0, None, 45.0, 30.0] * 10})
+    p = Project(data.assign(target=[0, 1] * 20), target="target")
+    p.preprocess()
+    assert not p.show_features().isna().any().any()
+
+
 def clustering():
     rng = np.random.default_rng(0)
     x = np.r_[rng.normal(-2, 0.3, (20, 2)), rng.normal(2, 0.3, (20, 2))]
@@ -44,6 +51,7 @@ CHECKS: dict[str, Callable[[], None]] = {
     "feature-selection": feature_selection,
     "qml": qml,
     "clustering": clustering,
+    "tabular": tabular,
 }
 
 

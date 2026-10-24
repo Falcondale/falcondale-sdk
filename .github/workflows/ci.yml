@@ -59,7 +59,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        extra: ["", feature-selection, qml, clustering]
+        extra: ["", feature-selection, qml, clustering, tabular]
     env:
       TF_CPP_MIN_LOG_LEVEL: "3"
     steps:

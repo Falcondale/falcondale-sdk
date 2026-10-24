@@ -92,6 +92,24 @@ model = myproject.evaluate("auto")
 baseline = myproject.evaluate("svc")
 ```
 
+## Looking at the raw table
+
+Before any number is computed, many issues can already be spotted in the raw table. With the `tabular` extra installed, `assess()` also diagnoses it with skrub and adds a table to the report showing, for every column:
+
+* its **kind** (numeric, category, text, date or dropped) and how many **features**, and so qubits, it becomes after encoding
+* the share of **missing** values
+* its **association with the target**, measured with [Cramér's V](https://en.wikipedia.org/wiki/Cram%C3%A9r%27s_V), from 0 (unrelated) to 1
+
+Pairs of columns carrying the same information (a Cramér's V of 0.9 or above) are flagged as redundant. All of it turns into hints in the *Next steps* panel: dropping redundant or unrelated columns, grouping rare categories, keeping only the relevant parts of a date or being careful with columns missing many values.
+
+```python
+assessment = myproject.assess()
+assessment.table_  # TableDiagnosis with one ColumnDiagnosis per column
+assessment.table_.hints()
+```
+
+The diagnosis does not change the score, which is computed on the encoded features, but it often explains it: a dataset with many one hot encoded columns will need many qubits, and features that show no signal usually come from columns barely related to the target.
+
 ## Outside a project
 
 The assessment is also available as a scikit-learn like estimator, which works with numpy arrays or dataframes and any number of classes (multiclass labels are analysed one class against the rest).
@@ -107,7 +125,7 @@ assessor.sub_scores_
 assessor.to_dict()  # everything as plain Python types, ready to be stored as JSON
 ```
 
-In Jupyter notebooks a fitted assessor renders the report directly. For large datasets `max_samples` analyses a stratified subsample and `max_features` the features with the highest variance, while `baseline=False` and `kernel=False` skip the classical baselines and the kernel diagnostics.
+Dataframes with non numeric columns are encoded the same way `preprocess()` does and diagnosed, `diagnose=False` skips the diagnosis. In Jupyter notebooks a fitted assessor renders the report directly. For large datasets `max_samples` analyses a stratified subsample and `max_features` the features with the highest variance, while `baseline=False` and `kernel=False` skip the classical baselines and the kernel diagnostics.
 
 !!! note
     The assessment is a heuristic. It does not prove or rule out a quantum advantage, it points to the models worth training first and to the steps that could make a dataset friendlier to quantum models. The final word is always the comparison of the trained models against a classical baseline.

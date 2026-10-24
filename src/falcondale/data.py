@@ -7,7 +7,10 @@ import numpy as np
 import pandas as pd
 from sklearn.decomposition import PCA
 from sklearn.model_selection import train_test_split
+from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import MinMaxScaler
+
+from .tabular import make_encoder, non_numeric_columns
 
 
 class Dataset:
@@ -31,6 +34,9 @@ class Dataset:
         self._columns: list[str] = [col for col in input_df.columns if col != target]
         self.target = target
 
+        self._encoder: Pipeline | None = None
+        self.encoder_options: dict = {}
+        self._numeric_columns: list = []
         self._scaler: MinMaxScaler | None = None
         self._dim_reduce: PCA | None = None
         self._features: pd.DataFrame | None = None
@@ -74,7 +80,7 @@ class Dataset:
         if summary["duplicated_rows"]:
             print(f"There are {summary['duplicated_rows']} duplicated rows.")
         if non_numeric:
-            print(f"Some features are not numeric, encode them before moving on: {non_numeric}")
+            print(f"Some features are not numeric, preprocess() will encode them with skrub: {non_numeric}")
         else:
             print("All data is numeric therefore little preprocessing might need to be done.")
         if summary["constant_columns"]:
@@ -82,18 +88,53 @@ class Dataset:
 
         return summary
 
-    def preprocess(self, reduced_dimension: int | None = None, method: str = "pca"):
+    def raw_features(self) -> pd.DataFrame:
         """
-        Preprocessing of the dataset: fills missing data with zeros and scales
-        the features into the [0, 1] range. Optionally, reduces the dimension
-        of the feature space using PCA.
+        The raw feature columns, as provided, target excluded.
+
+        Returns:
+            pd.DataFrame: Raw features
+        """
+        return self._rawdataset[[col for col in self._rawdataset.columns if col != self.target]]
+
+    def _numeric(self, raw: pd.DataFrame) -> pd.DataFrame:
+        if self._encoder is not None:
+            # skrub encodes categories as float32, scaling them in float64 keeps features within [0, 1]
+            return self._encoder.transform(raw).astype(float).reset_index(drop=True)
+        return raw.fillna(0).reset_index(drop=True)
+
+    def preprocess(
+        self,
+        reduced_dimension: int | None = None,
+        method: str = "pca",
+        encode: bool | str = "auto",
+        **encoder_options,
+    ):
+        """
+        Preprocessing of the dataset: makes every feature numeric and fully informed, then scales
+        the features into the [0, 1] range. Optionally, reduces the dimension of the feature space using PCA.
+
+        Numeric tables simply get their missing values filled with zeros. Tables with non numeric
+        columns (categories, text, dates) are encoded with skrub and missing values are filled with
+        the median, see `falcondale.tabular.make_encoder` (needs `falcondale[tabular]`).
 
         Args:
             reduced_dimension (int): (Optional) Number of dimensions to keep
             method (str): Dimensionality reduction method, only "pca" is supported
+            encode (bool | str): "auto" encodes with skrub only when there are non numeric columns,
+                True always does (also median imputation for numeric tables), False never does
+            **encoder_options: `make_encoder` options (`cardinality_threshold`, `string_components`,...)
         """
-        columns = [col for col in self._rawdataset.columns if col != self.target]
-        features = self._rawdataset[columns].fillna(0)
+        raw = self.raw_features()
+        non_numeric = non_numeric_columns(raw)
+        if encode is False and non_numeric:
+            raise ValueError(f"Non numeric columns need encoding, use encode='auto' or drop them: {non_numeric}")
+
+        self.encoder_options = encoder_options
+        self._encoder = make_encoder(**encoder_options).fit(raw) if encode is True or non_numeric else None
+        features = self._numeric(raw)
+        columns = list(features.columns)
+        self._numeric_columns = columns
 
         self._scaler = MinMaxScaler().fit(features)
         self._features = pd.DataFrame(self._scaler.transform(features), columns=columns)
@@ -126,8 +167,8 @@ class Dataset:
             raise RuntimeError("The dataset has not been preprocessed yet! Try calling preprocess() first.")
 
         raw_columns = [col for col in self._rawdataset.columns if col != self.target]
-        raw = input_df[raw_columns].fillna(0).reset_index(drop=True)
-        output = pd.DataFrame(self._scaler.transform(raw), columns=raw_columns)
+        numeric = self._numeric(input_df[raw_columns])
+        output = pd.DataFrame(self._scaler.transform(numeric), columns=self._numeric_columns)
 
         if self._dim_reduce is not None:
             output = pd.concat([output, self._reduce(output)], axis=1)

@@ -21,9 +21,15 @@ from .clustering import CLUSTERING
 from .data import Dataset
 from .feature_selection import SOLVERS, select_features
 from .model import Model
+from .tabular import table_report
 
 # A module from each extra, used to tell which ones are installed
-EXTRA_PROBES = {"feature-selection": "dimod", "qml": "qiskit_machine_learning", "clustering": "apqc"}
+EXTRA_PROBES = {
+    "feature-selection": "dimod",
+    "qml": "qiskit_machine_learning",
+    "clustering": "apqc",
+    "tabular": "skrub",
+}
 
 
 # Methods needing an extra, when only some of a task do (the rest run on the core dependencies)
@@ -67,12 +73,15 @@ class Project:
         """The Falcondale Dataset used by the project."""
         return self._data
 
-    def preprocess(self, reduced_dimension: int | None = None, method: str = "pca"):
+    def preprocess(
+        self, reduced_dimension: int | None = None, method: str = "pca", encode: bool | str = "auto", **kwargs: Any
+    ):
         """
         Performs information preprocessing to clean the dataset. This is a mandatory
         step before feature selection, training or clustering.
 
-        Mostly focused on data normalization and gap filling (missing values). It also allows
+        Mostly focused on data normalization and gap filling (missing values). Non numeric columns
+        (categories, free text, dates) are encoded with skrub, which needs `falcondale[tabular]`. It also allows
         for simple dimensionality reduction by indicating the reduced dimension size. This feature
         is mainly used when specific models are selected as large feature spaces may
         require more computational resources than the ones available on a common laptop.
@@ -82,13 +91,18 @@ class Project:
                 dimensional space.
             method (str): (Optional) Currently only supports PCA in combination with
                 reduced_dimension parameter.
+            encode (bool | str): (Optional) "auto" encodes with skrub only when there are non numeric
+                columns, True always does (median imputation for numeric tables), False never does
+            **kwargs: Encoding options, such as `cardinality_threshold` or `string_components`
+                (see `falcondale.tabular.make_encoder`)
 
         Example:
             ```py
             myproject.preprocess(reduced_dimension=3)
+            myproject.preprocess(cardinality_threshold=5)  # one hot encode up to 5 categories
             ```
         """
-        self._data.preprocess(reduced_dimension=reduced_dimension, method=method)
+        self._data.preprocess(reduced_dimension=reduced_dimension, method=method, encode=encode, **kwargs)
 
     def profile_dataset(self) -> dict:
         """
@@ -99,6 +113,23 @@ class Project:
             dict: Summary of the dataset
         """
         return self._data.profile()
+
+    def table_report(self, **kwargs: Any):
+        """
+        Interactive report of the raw dataset (distributions, missing values, associations between
+        columns) built with skrub, which needs `falcondale[tabular]`. Renders in notebooks, call
+        `.open()` on it to see it in the browser.
+
+        Args:
+            **kwargs: `skrub.TableReport` arguments, such as `title`
+
+        Returns:
+            skrub.TableReport: The report
+        """
+        return table_report(self._data.raw_features().assign(**self._target_column()), **kwargs)
+
+    def _target_column(self) -> dict[str, pd.Series]:
+        return {self._data.target: self._data.get_target()} if self._data.target else {}
 
     def show_features(self) -> pd.DataFrame:
         """
@@ -164,6 +195,9 @@ class Project:
         circuit depth needed, how hard the task is for classical baselines, the class balance
         and the qubit budget. See `falcondale.assessment.QMLAssessor` for the details.
 
+        With `falcondale[tabular]` installed the raw table is diagnosed too: how many features each
+        column becomes, missing values, redundant columns and columns unrelated to the target.
+
         The result is kept by the project, so that `evaluate("auto")` trains the most suitable model.
 
         Examples:
@@ -185,7 +219,12 @@ class Project:
         self._require_target("Assessment")
         if n_qubits is not None:
             kwargs["n_qubits"] = n_qubits
-        self._assessment = QMLAssessor(**kwargs).fit(self._data.get_features(), self._data.get_target())
+        self._assessment = QMLAssessor(**kwargs).fit(
+            self._data.get_features(),
+            self._data.get_target(),
+            table=self._data.raw_features(),
+            encoder_options=self._data.encoder_options,
+        )
         self._assessed_columns = self._data.columns()
         return self._assessment
 

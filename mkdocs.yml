@@ -22,6 +22,7 @@ nav:
   - More examples:
     - Advanced usage: 'examples/Advanced example.ipynb'
     - QML assessment: 'examples/QML assessment.ipynb'
+    - Real world tables: 'examples/Real world tables.ipynb'
     - Feature selection: 'examples/Feature selection options.ipynb'
     - Clustering: 'examples/Clustering examples.ipynb'
     - Clustering train and test: 'examples/Clustering train and test.ipynb'

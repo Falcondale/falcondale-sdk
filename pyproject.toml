@@ -48,7 +48,9 @@ qml = [
 ]
 # APQC relies on TensorFlow, Qiskit builds the interference circuits of quantum k-means
 clustering = ["apqc>=0.2.0", "qiskit>=2.4,<2.6"]
-all = ["falcondale[feature-selection,qml,clustering]"]
+# Encoding of non numeric columns (categories, text, dates) and diagnosis of raw tables
+tabular = ["skrub>=0.11"]
+all = ["falcondale[feature-selection,qml,clustering,tabular]"]
 
 [project.urls]
 Homepage = "https://github.com/Falcondale/falcondale-sdk"
