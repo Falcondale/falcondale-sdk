@@ -9,6 +9,7 @@ EXTRAS = {
     "feature-selection": "quantum feature selection",
     "qml": "quantum classifiers",
     "clustering": "quantum clustering",
+    "tabular": "encoding non numeric columns",
 }
 
 

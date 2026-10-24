@@ -34,6 +34,13 @@ def qml():
     p.evaluate("qnn", epochs=1)
 
 
+def tabular():
+    data = pd.DataFrame({"plan": ["basic", "plus", None, "plus"] * 10, "fee": [20.0, None, 45.0, 30.0] * 10})
+    p = Project(data.assign(target=[0, 1] * 20), target="target")
+    p.preprocess()
+    assert not p.show_features().isna().any().any()
+
+
 def clustering():
     rng = np.random.default_rng(0)
     x = np.r_[rng.normal(-2, 0.3, (20, 2)), rng.normal(2, 0.3, (20, 2))]
@@ -44,12 +51,14 @@ CHECKS: dict[str, Callable[[], None]] = {
     "feature-selection": feature_selection,
     "qml": qml,
     "clustering": clustering,
+    "tabular": tabular,
 }
 
 
 def main(installed: set[str]):
     # The classical baseline and the core clustering methods only need the core dependencies
     assert pd.notna(project().evaluate("svc").metric("auc"))
+    assert 0 <= project().assess().score_ <= 100
     x = np.r_[np.random.default_rng(0).normal(-2, 0.3, (20, 2)), np.random.default_rng(1).normal(2, 0.3, (20, 2))]
     assert SchrodingerClustering().fit(x).n_clusters_ == 2
     assert QuantumKMeans(2, random_state=0).fit(x).n_clusters_ == 2

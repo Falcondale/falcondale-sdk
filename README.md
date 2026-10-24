@@ -18,7 +18,7 @@ pip install "falcondale[all]"
 uv add "falcondale[all]"
 ```
 
-The core only depends on numpy, pandas, scikit-learn and scipy. Each family of techniques has its own extra (`feature-selection`, `qml` and `clustering`), so you can install just the one you need, for example `pip install "falcondale[clustering]"`.
+The core only depends on numpy, pandas, scikit-learn, scipy and rich. Each family of techniques has its own extra (`feature-selection`, `qml`, `clustering` and `tabular` for tables with categories, text or dates), so you can install just the one you need, for example `pip install "falcondale[clustering]"`.
 
 ## Quickstart
 
@@ -36,8 +36,11 @@ project.preprocess()  # fill gaps and scale features
 # Pick the 3 most informative and least redundant features solving a QUBO
 features = project.feature_selection(max_cols=3, method="sa")
 
+# How well suited is the data for QML? Which model should go first?
+project.assess().report()
+
 # Train a Quantum Support Vector Classifier and compare it with a classical one
-model = project.evaluate("qsvc")
+model = project.evaluate("qsvc")  # or evaluate("auto") for the one recommended by the assessment
 baseline = project.evaluate("svc")
 print(model.metric("auc"), baseline.metric("auc"))
 
@@ -49,6 +52,8 @@ model.save("qsvc.pkl")
 
 | Task | Methods | Built on |
 |------|---------|----------|
+| Data | Encoding of categories, text and dates, imputation of missing values and raw table diagnosis | skrub (`tabular`) |
+| Assessment | QML suitability score and model ranking from Fourier spectra, trainability, circuit depth and classical baselines | scikit-learn, rich |
 | Feature selection | `sa` simulated annealing, `sb` simulated bifurcation, `qaoa`, `exact` | dimod, dwave-samplers, simulated-bifurcation, Qiskit |
 | Classification | `qsvc` (Qiskit or PennyLane backend), `qnn`, `svc` classical baseline | Qiskit Machine Learning, PennyLane, PyTorch, scikit-learn |
 | Clustering | `pqc` probabilistic quantum clustering, `qc` Horn and Gottlieb quantum clustering, `qkmeans` quantum k-means and k-medians | APQC (`pqc`), NumPy |

@@ -16,13 +16,14 @@ Quantum computing frameworks (Qiskit, PennyLane, PyTorch, TensorFlow...) are hea
 
 ## Choosing what to install
 
-The core package only depends on numpy, pandas, scikit-learn and scipy. Each family of quantum techniques comes in its own extra, so you can install just what you need, which is handy when building container images:
+The core package only depends on numpy, pandas, scikit-learn, scipy and rich. Each family of quantum techniques, and the handling of non numeric tables, comes in its own extra, so you can install just what you need, which is handy when building container images:
 
 | Extra | Enables | Brings in |
 |-------|---------|-----------|
 | `feature-selection` | `feature_selection()` with `sa`, `sb` and `qaoa` | dimod, dwave-samplers, simulated-bifurcation, PyTorch, Qiskit |
 | `qml` | `evaluate()` with `qsvc` and `qnn` | Qiskit, Qiskit Machine Learning, PennyLane, PyTorch |
 | `clustering` | `cluster("pqc")`, `QuantumClustering` and the circuits of quantum k-means | APQC, TensorFlow, Qiskit |
+| `tabular` | Tables with categories, text or dates in `preprocess()`, raw table diagnosis in `assess()` and `table_report()` | skrub |
 | `all` | All of the above | |
 
 ```

@@ -10,19 +10,29 @@ Classes:
 
 import importlib.util
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
 
+from .assessment import QMLAssessor
 from .classifiers import MODELS, train_and_evaluate
 from .clustering import CLUSTERING
 from .data import Dataset
 from .feature_selection import SOLVERS, select_features
 from .model import Model
+from .tabular import table_report
+
+if TYPE_CHECKING:
+    from skrub import TableReport
 
 # A module from each extra, used to tell which ones are installed
-EXTRA_PROBES = {"feature-selection": "dimod", "qml": "qiskit_machine_learning", "clustering": "apqc"}
+EXTRA_PROBES = {
+    "feature-selection": "dimod",
+    "qml": "qiskit_machine_learning",
+    "clustering": "apqc",
+    "tabular": "skrub",
+}
 
 
 # Methods needing an extra, when only some of a task do (the rest run on the core dependencies)
@@ -54,6 +64,8 @@ class Project:
                 input_data dataframe
         """
         self._data = Dataset(input_data, target)
+        self._assessment: QMLAssessor | None = None
+        self._assessed_columns: list[str] = []
 
     def _require_target(self, task: str):
         if self._data.target is None:
@@ -64,12 +76,15 @@ class Project:
         """The Falcondale Dataset used by the project."""
         return self._data
 
-    def preprocess(self, reduced_dimension: int | None = None, method: str = "pca"):
+    def preprocess(
+        self, reduced_dimension: int | None = None, method: str = "pca", encode: bool | str = "auto", **kwargs: Any
+    ):
         """
         Performs information preprocessing to clean the dataset. This is a mandatory
         step before feature selection, training or clustering.
 
-        Mostly focused on data normalization and gap filling (missing values). It also allows
+        Mostly focused on data normalization and gap filling (missing values). Non numeric columns
+        (categories, free text, dates) are encoded with skrub, which needs `falcondale[tabular]`. It also allows
         for simple dimensionality reduction by indicating the reduced dimension size. This feature
         is mainly used when specific models are selected as large feature spaces may
         require more computational resources than the ones available on a common laptop.
@@ -79,13 +94,18 @@ class Project:
                 dimensional space.
             method (str): (Optional) Currently only supports PCA in combination with
                 reduced_dimension parameter.
+            encode (bool | str): (Optional) "auto" encodes with skrub only when there are non numeric
+                columns, True always does (median imputation for numeric tables), False never does
+            **kwargs: Encoding options, such as `cardinality_threshold` or `string_components`
+                (see `falcondale.tabular.make_encoder`)
 
         Example:
             ```py
             myproject.preprocess(reduced_dimension=3)
+            myproject.preprocess(cardinality_threshold=5)  # one hot encode up to 5 categories
             ```
         """
-        self._data.preprocess(reduced_dimension=reduced_dimension, method=method)
+        self._data.preprocess(reduced_dimension=reduced_dimension, method=method, encode=encode, **kwargs)
 
     def profile_dataset(self) -> dict:
         """
@@ -96,6 +116,23 @@ class Project:
             dict: Summary of the dataset
         """
         return self._data.profile()
+
+    def table_report(self, **kwargs: Any) -> "TableReport":
+        """
+        Interactive report of the raw dataset (distributions, missing values, associations between
+        columns) built with skrub, which needs `falcondale[tabular]`. Renders in notebooks, call
+        `.open()` on it to see it in the browser.
+
+        Args:
+            **kwargs: `skrub.TableReport` arguments, such as `title`
+
+        Returns:
+            skrub.TableReport: The report
+        """
+        return table_report(self._data.raw_features().assign(**self._target_column()), **kwargs)
+
+    def _target_column(self) -> dict[str, pd.Series]:
+        return {self._data.target: self._data.get_target()} if self._data.target else {}
 
     def show_features(self) -> pd.DataFrame:
         """
@@ -151,6 +188,54 @@ class Project:
 
         return feature_cols
 
+    def assess(self, n_qubits: int | None = None, **kwargs: Any) -> QMLAssessor:
+        """
+        Assesses how well suited the current features are for quantum machine learning
+        and ranks the models available in `evaluate` accordingly.
+
+        The assessment looks at how fast the target oscillates along each feature (what angle
+        encoded circuits have to express), how many of those frequencies are trainable, the
+        circuit depth needed, how hard the task is for classical baselines, the class balance
+        and the qubit budget. See `falcondale.assessment.QMLAssessor` for the details.
+
+        With `falcondale[tabular]` installed the raw table is diagnosed too: how many features each
+        column becomes, missing values, redundant columns and columns unrelated to the target.
+
+        The result is kept by the project, so that `evaluate("auto")` trains the most suitable model.
+
+        Examples:
+            Can be called from Project instance:
+
+            ```py
+            assessment = myproject.assess(n_qubits=8)
+            assessment.report()
+            assessment.best_model
+            ```
+
+        Args:
+            n_qubits (int): (Optional) Qubit budget, 16 by default (the statevector limit of QSVC)
+            **kwargs: Additional `QMLAssessor` options, such as `max_samples` for large datasets
+
+        Returns:
+            QMLAssessor: The fitted assessor holding scores, diagnostics and model recommendations
+        """
+        self._require_target("Assessment")
+        if n_qubits is not None:
+            kwargs["n_qubits"] = n_qubits
+        self._assessment = QMLAssessor(**kwargs).fit(
+            self._data.get_features(),
+            self._data.get_target(),
+            table=self._data.raw_features(),
+            encoder_options=self._data.encoder_options,
+        )
+        self._assessed_columns = self._data.columns()
+        return self._assessment
+
+    @property
+    def assessment(self) -> QMLAssessor | None:
+        """Latest assessment of the project, None until `assess` is called."""
+        return self._assessment
+
     @staticmethod
     def list_options() -> dict[str, list[str]]:
         """
@@ -174,6 +259,7 @@ class Project:
             needed = [m for m in methods if m in NEEDS_EXTRA.get(extra, methods)]
             hint = "" if _installed(extra) else f' ({", ".join(needed)} need: pip install "falcondale[{extra}]")'
             print(f" - {text}: {', '.join(methods)}{hint}")
+        print(' - Assess how suited your data is for QML with assess(), then evaluate("auto") picks the best model')
         return options
 
     def evaluate(self, model: str, test_size: float = 0.3, **kwargs: Any) -> Model:
@@ -186,6 +272,8 @@ class Project:
         * **svc**: Classical Support Vector Classifier (baseline)
         * **qsvc**: For Quantum Support Vector Classifier (`backend="qiskit"` or `backend="pennylane"`)
         * **qnn**: For Quantum Neural Network (`layers`, `epochs`, `learning_rate`,...)
+        * **auto**: The most suitable model according to `assess`, which is run first if the
+          project has not been assessed yet or the features changed since
 
         Args:
             model (str): Model name to be trained
@@ -201,10 +289,18 @@ class Project:
 
             ```py
             model = myproject.evaluate("qsvc", backend="pennylane")
+            model = myproject.evaluate("auto")
             ```
         """
         self._require_target("Classification")
         model = model.lower()
+        if model == "auto":
+            if self._assessment is None or self._assessed_columns != self._data.columns():
+                self.assess()
+            assert self._assessment is not None
+            best = self._assessment.best_model
+            print(f"Assessment recommends {best.name}: {best.reasons[0]}")
+            model, kwargs = best.model, {**best.options, **kwargs}
         estimator, report, metrics = train_and_evaluate(model, self._data, test_size=test_size, **kwargs)
         return Model(self._data, model, estimator, report, metrics)
 

@@ -44,7 +44,7 @@ uv run --group docs mkdocs serve   # documentation at http://127.0.0.1:8000
 
 Tests that run quantum simulations taking more than a few seconds are marked with `@pytest.mark.slow`.
 
-The core package must keep working with only numpy, pandas, scikit-learn and scipy. Import quantum libraries inside the functions that need them, wrapped in `falcondale._optional.optional_dependencies("<extra>")` so that a missing extra raises a helpful message. CI installs each extra on its own and runs `scripts/check_extras.py`, which you can also run locally:
+The core package must keep working with only numpy, pandas, scikit-learn, scipy and rich. Import quantum libraries inside the functions that need them, wrapped in `falcondale._optional.optional_dependencies("<extra>")` so that a missing extra raises a helpful message. CI installs each extra on its own and runs `scripts/check_extras.py`, which you can also run locally:
 
 ```bash
 UV_PROJECT_ENVIRONMENT=.venv-qml uv sync --no-default-groups --extra qml
