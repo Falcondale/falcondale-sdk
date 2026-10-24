@@ -17,7 +17,7 @@ import pandas as pd
 
 from .assessment import QMLAssessor
 from .classifiers import MODELS, train_and_evaluate
-from .clustering import CLUSTERING
+from .clustering import APQC_SUPPORTED, CLUSTERING
 from .data import Dataset
 from .feature_selection import SOLVERS, select_features
 from .model import Model
@@ -41,6 +41,13 @@ NEEDS_EXTRA = {"clustering": ["pqc"]}
 
 def _installed(extra: str) -> bool:
     return importlib.util.find_spec(EXTRA_PROBES[extra]) is not None
+
+
+def _missing_hint(extra: str, methods: list[str]) -> str:
+    needed = ", ".join(m for m in methods if m in NEEDS_EXTRA.get(extra, methods))
+    if extra == "clustering" and not APQC_SUPPORTED:
+        return f" ({needed} needs Python 3.13 or lower)"
+    return "" if _installed(extra) else f' ({needed} need: pip install "falcondale[{extra}]")'
 
 
 class Project:
@@ -256,9 +263,7 @@ class Project:
         ]
         print("Welcome to Falcondale SDK! you will be able to:")
         for extra, text, methods in tasks:
-            needed = [m for m in methods if m in NEEDS_EXTRA.get(extra, methods)]
-            hint = "" if _installed(extra) else f' ({", ".join(needed)} need: pip install "falcondale[{extra}]")'
-            print(f" - {text}: {', '.join(methods)}{hint}")
+            print(f" - {text}: {', '.join(methods)}{_missing_hint(extra, methods)}")
         print(' - Assess how suited your data is for QML with assess(), then evaluate("auto") picks the best model')
         return options
 
@@ -312,7 +317,7 @@ class Project:
 
         Currently supports:
 
-        * **pqc**: For Probabilistic Quantum Clustering (needs `falcondale[clustering]`)
+        * **pqc**: For Probabilistic Quantum Clustering (needs `falcondale[clustering]` and Python 3.13 or lower)
         * **qc**: For Horn and Gottlieb Quantum Clustering
         * **qkmeans**: For quantum k-means, distances estimated by interference (`n_clusters`,
           `center="median"` for k-medians, `shots`)

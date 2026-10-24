@@ -4,7 +4,7 @@ Falcondale offers three methods, all of them scikit-learn estimators living in `
 
 | Method | Estimator | Idea | Needs |
 |--------|-----------|------|-------|
-| `pqc` | `QuantumClustering` | Probabilistic Quantum Clustering, fuzzy memberships from a quantum potential | `pip install "falcondale[clustering]"` (APQC and TensorFlow) |
+| `pqc` | `QuantumClustering` | Probabilistic Quantum Clustering, fuzzy memberships from a quantum potential | `pip install "falcondale[clustering]"` (APQC and TensorFlow, Python 3.13 or lower) |
 | `qc` | `SchrodingerClustering` | The original Quantum Clustering, samples roll down a quantum potential | Core install |
 | `qkmeans` | `QuantumKMeans` | k-means or k-medians with distances estimated by quantum interference | Core install |
 

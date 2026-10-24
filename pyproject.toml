@@ -6,7 +6,7 @@ readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Falcondale", email = "info@falcondale.pro" }]
-requires-python = ">=3.11,<3.14"
+requires-python = ">=3.11,<3.15"
 keywords = ["quantum computing", "quantum machine learning", "qiskit", "pennylane", "qubo", "feature selection"]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -18,6 +18,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Scientific/Engineering :: Physics",
 ]
@@ -46,8 +47,9 @@ qml = [
     "qiskit-machine-learning>=0.9.1",
     "torch>=2.6",
 ]
-# APQC relies on TensorFlow, Qiskit builds the interference circuits of quantum k-means
-clustering = ["apqc>=0.2.0", "qiskit>=2.4,<2.6"]
+# APQC relies on TensorFlow, Qiskit builds the interference circuits of quantum k-means.
+# Neither APQC nor TensorFlow support Python 3.14 yet, there pqc is not available.
+clustering = ["apqc>=0.2.0; python_version < '3.14'", "qiskit>=2.4,<2.6"]
 # Encoding of non numeric columns (categories, text, dates) and diagnosis of raw tables
 tabular = ["skrub>=0.11"]
 all = ["falcondale[feature-selection,qml,clustering,tabular]"]
@@ -116,6 +118,7 @@ filterwarnings = [
     "ignore::DeprecationWarning:pennylane.*",
     "ignore::DeprecationWarning:tensorflow.*",
     "ignore::DeprecationWarning:gast.*",  # TensorFlow autograph on Python 3.13
+    "ignore:'return' in a 'finally' block:SyntaxWarning",  # simulated-bifurcation on Python 3.14
 ]
 
 [tool.coverage.run]

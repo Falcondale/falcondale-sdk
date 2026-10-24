@@ -1,6 +1,6 @@
 # Installation
 
-Falcondale is a Python library (3.11 to 3.13) that can be installed with the usual tools. To get everything:
+Falcondale is a Python library (3.11 to 3.14) that can be installed with the usual tools. To get everything:
 
 ```
 pip install "falcondale[all]"
@@ -22,7 +22,7 @@ The core package only depends on numpy, pandas, scikit-learn, scipy and rich. Ea
 |-------|---------|-----------|
 | `feature-selection` | `feature_selection()` with `sa`, `sb` and `qaoa` | dimod, dwave-samplers, simulated-bifurcation, PyTorch, Qiskit |
 | `qml` | `evaluate()` with `qsvc` and `qnn` | Qiskit, Qiskit Machine Learning, PennyLane, PyTorch |
-| `clustering` | `cluster("pqc")`, `QuantumClustering` and the circuits of quantum k-means | APQC, TensorFlow, Qiskit |
+| `clustering` | `cluster("pqc")`, `QuantumClustering` and the circuits of quantum k-means | APQC and TensorFlow (Python 3.13 or lower), Qiskit |
 | `tabular` | Tables with categories, text or dates in `preprocess()`, raw table diagnosis in `assess()` and `table_report()` | skrub |
 | `all` | All of the above | |
 
@@ -30,6 +30,8 @@ The core package only depends on numpy, pandas, scikit-learn, scipy and rich. Ea
 pip install "falcondale[clustering]"
 pip install "falcondale[feature-selection,qml]"
 ```
+
+APQC and TensorFlow do not support Python 3.14 yet, so there the `clustering` extra only brings Qiskit and Probabilistic Quantum Clustering (`pqc`) is not available. The other clustering methods work on any version.
 
 Using a technique whose extra is missing raises an error telling you what to install, and `Project.list_options()` shows which ones are available.
 
