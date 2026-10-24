@@ -18,6 +18,7 @@ The last two only need the core dependencies.
 
 import gc
 import os
+import sys
 import time
 import warnings
 from collections.abc import Callable, Sequence
@@ -79,7 +80,17 @@ def _parse_bandwidth(bandwidth: Bandwidth | str) -> Bandwidth:
     return kind, float(value)
 
 
+# APQC and TensorFlow are not available for newer Python versions yet
+APQC_SUPPORTED = sys.version_info < (3, 14)
+
+
 def _load_apqc():
+    if not APQC_SUPPORTED:
+        raise ImportError(
+            "Probabilistic Quantum Clustering (pqc) relies on APQC and TensorFlow, which do not support "
+            f"Python {sys.version_info.major}.{sys.version_info.minor} yet. Use Python 3.11 to 3.13 for pqc, "
+            "or the qc and qkmeans methods, available on any version."
+        )
     # TensorFlow reads these when imported. oneDNN is disabled for reproducible results.
     os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "3")
     os.environ.setdefault("TF_ENABLE_ONEDNN_OPTS", "0")

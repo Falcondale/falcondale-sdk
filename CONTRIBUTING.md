@@ -59,7 +59,7 @@ The synthetic cohort used by the clustering regression test lives in `tests/data
 2. Add tests for your change. New models or solvers should plug into the registries in `classifiers.py`, `feature_selection.py` or `clustering.py` so that `Project` picks them up.
 3. Update the documentation under `docs/` if the user facing behaviour changes.
 4. Commit following [Conventional Commits](https://www.conventionalcommits.org/). The commit message hook will complain otherwise. `uv run cz commit` will guide you if you prefer.
-5. Open a pull request against `develop`. CI runs the pre-commit checks and the test suite on Python 3.11, 3.12 and 3.13.
+5. Open a pull request against `develop`. CI runs the pre-commit checks and the test suite on Python 3.11, 3.12, 3.13 and 3.14.
 
 ### Commit messages
 

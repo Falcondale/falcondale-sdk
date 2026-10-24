@@ -13,6 +13,7 @@ from sklearn.preprocessing import StandardScaler
 
 from falcondale import Project
 from falcondale.clustering import (
+    APQC_SUPPORTED,
     QuantumClustering,
     QuantumKMeans,
     SchrodingerClustering,
@@ -24,7 +25,10 @@ from falcondale.helpers.potential import potential, potential_gradient
 
 FIXTURE = Path(__file__).parent / "data" / "four_profiles.csv"
 
-needs_apqc = pytest.mark.skipif(importlib.util.find_spec("apqc") is None, reason="requires falcondale[clustering]")
+needs_apqc = pytest.mark.skipif(
+    importlib.util.find_spec("apqc") is None,
+    reason="requires falcondale[clustering]" if APQC_SUPPORTED else "APQC does not support this Python version",
+)
 
 
 @pytest.fixture(scope="module")

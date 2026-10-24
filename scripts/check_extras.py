@@ -13,7 +13,8 @@ import pandas as pd
 from sklearn import datasets
 
 from falcondale import Project
-from falcondale.clustering import QuantumClustering, QuantumKMeans, SchrodingerClustering
+from falcondale.clustering import APQC_SUPPORTED, QuantumClustering, QuantumKMeans, SchrodingerClustering
+from falcondale.helpers.interference import interference_circuit
 
 
 def project() -> Project:
@@ -44,7 +45,9 @@ def tabular():
 def clustering():
     rng = np.random.default_rng(0)
     x = np.r_[rng.normal(-2, 0.3, (20, 2)), rng.normal(2, 0.3, (20, 2))]
-    assert QuantumClustering(bandwidths=["scalar:0.2"], steps=100, random_state=0).fit(x).n_clusters_ == 2
+    assert interference_circuit(x[0], x[1]).num_qubits > 0
+    if APQC_SUPPORTED:
+        assert QuantumClustering(bandwidths=["scalar:0.2"], steps=100, random_state=0).fit(x).n_clusters_ == 2
 
 
 CHECKS: dict[str, Callable[[], None]] = {

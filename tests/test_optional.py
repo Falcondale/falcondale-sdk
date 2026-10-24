@@ -41,9 +41,22 @@ def test_qnn_hint(monkeypatch):
 
 
 def test_clustering_hint(monkeypatch):
+    monkeypatch.setattr("falcondale.clustering.APQC_SUPPORTED", True)
     _hide(monkeypatch, "apqc")
     with pytest.raises(ImportError, match=r"falcondale\[clustering\]"):
         QuantumClustering().fit(np.zeros((10, 2)))
+
+
+def test_clustering_unsupported_python(monkeypatch, capsys):
+    monkeypatch.setattr("falcondale.clustering.APQC_SUPPORTED", False)
+    with pytest.raises(ImportError, match=r"Python 3\.11 to 3\.13"):
+        QuantumClustering().fit(np.zeros((10, 2)))
+
+    monkeypatch.setattr("falcondale.project.APQC_SUPPORTED", False)
+    Project.list_options()
+    out = capsys.readouterr().out
+    assert "pqc needs Python 3.13 or lower" in out
+    assert "falcondale[clustering]" not in out
 
 
 def test_list_options_hints_missing_extras(monkeypatch, capsys):
