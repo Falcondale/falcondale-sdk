@@ -36,18 +36,18 @@ feature-selection = [
     "dwave-samplers>=1.8.0",
     # qiskit 2.6.0 needs ~1.5KB of static TLS and, together with the libgomp copies shipped by
     # torch and scikit-learn, fails to import on glibc ("cannot allocate memory in static TLS block")
-    "qiskit>=2.4,<2.6",
+    "qiskit>=2.4,<2.7",
     "simulated-bifurcation>=2.0.0",
     "torch>=2.6",
 ]
 qml = [
     "pennylane>=0.45.1",
-    "qiskit>=2.4,<2.6",
+    "qiskit>=2.4,<2.7",
     "qiskit-machine-learning>=0.9.1",
     "torch>=2.6",
 ]
 # APQC relies on TensorFlow, Qiskit builds the interference circuits of quantum k-means
-clustering = ["apqc>=0.2.0", "qiskit>=2.4,<2.6"]
+clustering = ["apqc>=0.2.0", "qiskit>=2.4,<2.7"]
 # Encoding of non numeric columns (categories, text, dates) and diagnosis of raw tables
 tabular = ["skrub>=0.11"]
 all = ["falcondale[feature-selection,qml,clustering,tabular]"]
